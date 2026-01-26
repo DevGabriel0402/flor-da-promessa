@@ -1,0 +1,128 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function estaLogado() {
+      return request.auth != null;
+    }
+
+    // Admin de verdade: precisa existir doc em /administradores/{uid} e estar ativo
+    function eAdmin() {
+      return estaLogado()
+        && exists(/databases/$(database)/documents/administradores/$(request.auth.uid))
+        && get(/databases/$(database)/documents/administradores/$(request.auth.uid)).data.ativo == true
+        && get(/databases/$(database)/documents/administradores/$(request.auth.uid)).data.papel == "admin";
+    }
+
+    function temCampos(dados, campos) {
+      return dados.keys().hasAll(campos);
+    }
+
+    function isString(v) { return v is string && v.size() > 0; }
+    function isNumber(v) { return v is number; }
+    function isBool(v) { return v is bool; }
+
+    // -------------------------------------------------------
+    // ADMINISTRADORES
+    // -------------------------------------------------------
+    match /administradores/{adminId} {
+      // Admin pode ler tudo de admin
+      allow read: if eAdmin();
+
+      // Criar: só o próprio usuário logado (primeiro admin você cria manualmente no console)
+      allow create: if estaLogado()
+        && request.auth.uid == adminId
+        && temCampos(request.resource.data, ['nome','email','papel','ativo','criadoEm','ultimoLoginEm'])
+        && request.resource.data.papel == "admin"
+        && request.resource.data.ativo == true;
+
+      // Atualizar: admin pode atualizar (ex: ultimoLoginEm, ativo)
+      allow update: if eAdmin();
+
+      // Deletar: recomendado bloquear (evita se trancar fora)
+      allow delete: if false;
+    }
+
+    // -------------------------------------------------------
+    // CONFIGURAÇÕES
+    // -------------------------------------------------------
+    match /configuracoes/app {
+      allow read: if true;
+      allow write: if eAdmin();
+    }
+
+    // -------------------------------------------------------
+    // PRODUTOS
+    // -------------------------------------------------------
+    match /produtos/{produtoId} {
+      // público só lê ativos; admin lê tudo
+      allow get, list: if resource.data.ativo == true || eAdmin();
+      allow create, update, delete: if eAdmin();
+    }
+
+    // -------------------------------------------------------
+    // CLIENTES
+    // clienteId = cpfNormalizado
+    // -------------------------------------------------------
+    match /clientes/{clienteId} {
+      allow read: if eAdmin();
+
+      allow create: if true
+        && request.resource.id == request.resource.data.cpfNormalizado
+        && request.resource.data.cpfNormalizado.matches('^[0-9]{11}$')
+        && temCampos(request.resource.data, [
+          'nome','cpfNormalizado','cpfMascarado','contato',
+          'endereco','totalPedidos','criadoEm','ultimoPedidoEm'
+        ])
+        && isString(request.resource.data.nome)
+        && isString(request.resource.data.cpfMascarado)
+        && isString(request.resource.data.contato)
+        && (request.resource.data.totalPedidos is number);
+
+      allow update, delete: if eAdmin();
+    }
+
+    // -------------------------------------------------------
+    // PEDIDOS (somente admin lê)
+    // -------------------------------------------------------
+    match /pedidos/{pedidoId} {
+      allow read: if eAdmin();
+
+      allow create: if true
+        && temCampos(request.resource.data, [
+          'cliente','endereco','itens','subtotal','taxaEntrega','total',
+          'pagamento','status','codigoConsulta','criadoEm','atualizadoEm'
+        ])
+        && request.resource.data.status == 'recebido'
+        && request.resource.data.codigoConsulta.matches('^[A-Z0-9]{6}$')
+        && (request.resource.data.pagamento in ['pix','dinheiro','cartao'])
+        && isNumber(request.resource.data.subtotal)
+        && isNumber(request.resource.data.taxaEntrega)
+        && isNumber(request.resource.data.total)
+        && request.resource.data.total == request.resource.data.subtotal + request.resource.data.taxaEntrega
+        && request.resource.data.cliente.cpfNormalizado.matches('^[0-9]{11}$');
+
+      allow update, delete: if eAdmin();
+    }
+
+    // -------------------------------------------------------
+    // CONSULTAS (acompanhar pedido sem login)
+    // consultaId = cpfNormalizado + "_" + codigoConsulta
+    // -------------------------------------------------------
+    match /consultas/{consultaId} {
+      allow get: if true;
+      allow list: if false;
+
+      allow create: if true
+        && temCampos(request.resource.data, [
+          'pedidoId','cpfNormalizado','codigoConsulta','status','criadoEm','atualizadoEm'
+        ])
+        && request.resource.data.cpfNormalizado.matches('^[0-9]{11}$')
+        && request.resource.data.codigoConsulta.matches('^[A-Z0-9]{6}$')
+        && request.resource.id == (request.resource.data.cpfNormalizado + '_' + request.resource.data.codigoConsulta)
+        && request.resource.data.status == 'recebido';
+
+      allow update, delete: if eAdmin();
+    }
+  }
+}
