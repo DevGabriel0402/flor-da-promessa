@@ -5,7 +5,7 @@ import { useTheme } from 'styled-components';
 
 import { useCarrinho } from '../../contexto/CarrinhoContexto';
 import { validarCpf, normalizarCpf } from '../../utils/cpf';
-import { mascararCpf, formatarMoeda } from '../../utils/mascaras';
+import { mascararCpf, formatarMoeda, aplicarMascaraCpf, aplicarMascaraTelefone } from '../../utils/mascaras';
 import { gerarCodigoConsulta } from '../../utils/gerarCodigo';
 import { lojaEstaAberta } from '../../utils/datas';
 import { useConfig } from '../../contexto/ConfigContexto';
@@ -45,8 +45,8 @@ export default function Checkout() {
             toast.success('Bem-vindo de volta! Endereço carregado.');
             setForm(p => ({
               ...p,
-              nome: p.nome || cliente.nome || '',
-              contato: p.contato || cliente.contato || '',
+              nome: cliente.nome || p.nome,
+              contato: cliente.contato ? aplicarMascaraTelefone(cliente.contato) : p.contato,
               rua: cliente.endereco?.rua || p.rua,
               numero: cliente.endereco?.numero || p.numero,
               bairro: cliente.endereco?.bairro || p.bairro,
@@ -61,6 +61,13 @@ export default function Checkout() {
     }
   }, [form.cpf]);
 
+  const onChange = (campo) => (e) => {
+    let valor = e.target.value;
+    if (campo === 'cpf') valor = aplicarMascaraCpf(valor);
+    if (campo === 'contato') valor = aplicarMascaraTelefone(valor);
+
+    setForm((p) => ({ ...p, [campo]: valor }));
+  };
   const taxaEntrega = Number(config?.taxaEntrega ?? 8);
   const total = subtotal + taxaEntrega;
   const aberto = lojaEstaAberta(config?.funcionamento);
@@ -73,7 +80,6 @@ export default function Checkout() {
     config: config?.funcionamento
   });
 
-  const onChange = (campo) => (e) => setForm((p) => ({ ...p, [campo]: e.target.value }));
 
   const handleSubmit = async (e) => {
     e.preventDefault();

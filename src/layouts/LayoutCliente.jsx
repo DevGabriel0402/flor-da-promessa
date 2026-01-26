@@ -132,10 +132,10 @@ export default function LayoutCliente({ children }) {
           <HiOutlineClipboardDocumentList size={22} />
           Pedidos
         </NavItem>
-        {/* <NavItem to="/admin/login" $ativo={pathname.startsWith('/admin')}>
+        <NavItem to="/admin/login" $ativo={pathname.startsWith('/admin')}>
           <HiOutlineUserCircle size={22} />
           Admin
-        </NavItem> */}
+        </NavItem>
       </Nav>
     </Wrapper>
   );

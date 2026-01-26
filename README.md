@@ -1,78 +1,78 @@
 # Flor da Promessa 🌸
 
-A premium delivery web application for fine confectionery. Built with a focus on aesthetics, responsiveness, and a seamless user experience.
+Uma aplicação web premium de delivery para alta confeitaria. Desenvolvida com foco em estética, responsividade e uma experiência de usuário impecável.
 
-![Premium Confectionery](https://res.cloudinary.com/dxs92g9nu/image/upload/v1769406568/flor-da-promessa/logo/xvxidy7lqsam2nayhlmt.png)
+![Confeitaria Premium](https://res.cloudinary.com/dxs92g9nu/image/upload/v1769406568/flor-da-promessa/logo/xvxidy7lqsam2nayhlmt.png)
 
-## ✨ Key Features
+## ✨ Principais Funcionalidades
 
-### 🛒 Client Experience (No Login Required)
-- **Branded Splash Screen**: Instant logo feedback during initial load.
-- **Dynamic Catalog**: Real-time product updates, category filtering, and smart search.
-- **Persistent Shopping Cart**: Items are saved automatically and isolated per project.
-- **Seamless Navigation**: Scroll position restoration and easy tracking.
-- **Smart Checkout**: Simplified flow with support for Pix, Cash, and Card.
-- **Live Order Tracking**: Beautiful timeline visualization with status-specific icons.
+### 🛒 Experiência do Cliente (Sem Login)
+- **Splash Screen com Marca**: Logo exibido instantaneamente durante o carregamento inicial.
+- **Catálogo Dinâmico**: Atualizações de produtos em tempo real, filtros por categoria e busca inteligente.
+- **Carrinho de Compras Persistente**: Itens salvos automaticamente e isolados por projeto.
+- **Navegação Fluida**: Restauração da posição de rolagem (scroll) e fácil acompanhamento.
+- **Checkout Inteligente**: Fluxo simplificado com suporte a Pix, Dinheiro e Cartão, além de preenchimento automático de endereço por CPF.
+- **Rastreamento de Pedido**: Visualização de linha do tempo com ícones específicos para cada status.
 
-### 🛡️ Admin Panel (Authenticated)
-- **Real-time Dashboard**: Overview of orders, active products, and customer base.
-- **Interactive Kanban**: Manage the order flow with a drag-and-drop feel on desktop and filtered list on mobile.
-- **Product Management**: Full CRUD with image upload via Cloudinary.
-- **Customer Directory**: Track customer history and contact details.
-- **Store Configuration**: Centralized control over branding, delivery fees, and store hours.
+### 🛡️ Painel Administrativo (Autenticado)
+- **Dashboard em Tempo Real**: Visão geral de pedidos, produtos ativos e base de clientes.
+- **Kanban Interativo**: Gerenciamento do fluxo de pedidos com interface drag-and-drop no desktop e lista filtrada no mobile.
+- **Gestão de Produtos**: CRUD completo com upload de imagens via Cloudinary.
+- **Diretório de Clientes**: Histórico de clientes e detalhes de contato.
+- **Configuração da Loja**: Controle centralizado de branding, taxas de entrega e horários de funcionamento.
 
-## 🛠️ Tech Stack
+## 🛠️ Tecnologias Utilizadas
 
 - **Core**: [React 19](https://react.dev/) + [Vite](https://vitejs.dev/)
-- **Styling**: [Styled Components](https://styled-components.com/) (Modular UI Architecture)
+- **Estilização**: [Styled Components](https://styled-components.com/) (Arquitetura de UI Modular)
 - **Backend**: [Firebase](https://firebase.google.com/) (Auth, Firestore)
-- **Media**: [Cloudinary](https://cloudinary.com/) (Image hosting)
+- **Mídia**: [Cloudinary](https://cloudinary.com/) (Hospedagem de imagens)
 - **Feedback**: [React Hot Toast](https://react-hot-toast.com/)
-- **Icons**: [Lucide (via React Icons)](https://react-icons.github.io/react-icons/)
+- **Ícones**: [Lucide (via React Icons)](https://react-icons.github.io/react-icons/)
 
-## 🚀 Getting Started
+## 🚀 Como Começar
 
-### Prerequisites
-- Node.js (Latest LTS recommended)
-- A Firebase project with Auth (Email/Pass) and Firestore enabled.
+### Pré-requisitos
+- Node.js (Versão LTS recomendada)
+- Projeto Firebase com Auth (E-mail/Senha) e Firestore ativados.
 
-### Installation
+### Instalação
 
-1. **Clone and Install**:
+1. **Clonar e Instalar**:
 ```bash
-git clone <repository-url>
+git clone <url-do-repositorio>
 cd flor-da-promessa
 npm install
 ```
 
-2. **Configure Environment**:
-Create a `.env` file in the root directory:
+2. **Configurar Ambiente**:
+Crie um arquivo `.env` na raiz do projeto:
 ```env
-VITE_FIREBASE_API_KEY=your_api_key
-VITE_FIREBASE_AUTH_DOMAIN=your_auth_domain
-VITE_FIREBASE_PROJECT_ID=your_project_id
-VITE_FIREBASE_STORAGE_BUCKET=your_storage_bucket
-VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
-VITE_FIREBASE_APP_ID=your_app_id
+VITE_FIREBASE_API_KEY=sua_api_key
+VITE_FIREBASE_AUTH_DOMAIN=seu_auth_domain
+VITE_FIREBASE_PROJECT_ID=seu_project_id
+VITE_FIREBASE_STORAGE_BUCKET=seu_storage_bucket
+VITE_FIREBASE_MESSAGING_SENDER_ID=seu_id_de_envio
+VITE_FIREBASE_APP_ID=seu_id_do_app
 ```
 
-3. **Run Development Server**:
+3. **Rodar Servidor de Desenvolvimento**:
 ```bash
 npm run dev
 ```
 
-## 🏗️ Project Architecture
+## 🏗️ Arquitetura do Projeto
 
-We follow a modular UI approach to ensure maintainability and high performance:
+Seguimos uma abordagem de UI modular para garantir manutenibilidade e alta performance:
 
-- `src/components/ui/`: Isolated styled-components repo (`Base`, `Botoes`, `Form`, `Dropdown`).
-- `src/utils/persistence.js`: Centralized data isolation with `fp_` prefix.
-- `src/contexto/`: Strategic use of React Context for global state (Carrinho, Config).
-- `src/hooks/`: Custom hooks for logic reuse (`useScrollRestoration`, etc.).
+- `src/components/ui/`: Biblioteca de componentes isolados (`Base`, `Botoes`, `Form`, `Dropdown`).
+- `src/utils/persistence.js`: Isolamento de dados centralizado com o prefixo `fp_`.
+- `src/contexto/`: Uso estratégico de React Context para estado global (Carrinho, Config).
+- `src/hooks/`: Hooks customizados para reutilização de lógica (`useScrollRestoration`, etc.).
 
-## 🔐 Security & Rules
+## 🔐 Segurança e Regras
 
-Deployment includes optimized `firestore.rules` to ensure data privacy while allowing public order tracking via strict `codigoConsulta` matching.
+A implementação inclui `firestore.rules` otimizadas para garantir a privacidade dos dados, permitindo o acompanhamento público de pedidos apenas via correspondência estrita de `codigoConsulta`.
 
 ---
 

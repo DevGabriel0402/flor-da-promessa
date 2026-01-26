@@ -100,21 +100,32 @@ const Foto = styled.img`
   border-radius: 16px;
 `;
 
+const Content = styled.div`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-width: 0; /* Essencial para que o flex respeite o texto interno */
+`;
+
 const NomeProd = styled.div`
   font-weight: 900;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 `;
 
 const Desc = styled.div`
-  
-  max-width: 300px;
   font-size: 12px;
   color: ${({ theme }) => theme.cores.cinza};
   margin-top: 4px;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
+  line-clamp: 2;
   overflow: hidden;
   text-overflow: ellipsis;
+  width: 180px;
 `;
 
 const Rodape = styled.div`
@@ -209,9 +220,9 @@ export default function Cardapio() {
           {filtrados.map((p) => (
             <ProdutoCard key={p.id} to={`/produto/${p.id}`}>
               <Foto src={p.fotoUrl || 'https://picsum.photos/seed/flor/400/400'} alt={p.nome} />
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+              <Content>
                 <div>
-                  <NomeProd>{p.nome}</NomeProd>
+                  <NomeProd title={p.nome}>{p.nome}</NomeProd>
                   <Desc>{p.descricao}</Desc>
                 </div>
                 <Rodape>
@@ -228,7 +239,7 @@ export default function Cardapio() {
                     <HiPlus size={18} />
                   </Add>
                 </Rodape>
-              </div>
+              </Content>
             </ProdutoCard>
           ))}
 
