@@ -2,7 +2,7 @@
 
 Uma aplicação web premium de delivery para alta confeitaria. Desenvolvida com foco em estética, responsividade e uma experiência de usuário impecável.
 
-![Confeitaria Premium](https://res.cloudinary.com/dxs92g9nu/image/upload/v1769406568/flor-da-promessa/logo/xvxidy7lqsam2nayhlmt.png)
+![Confeitaria Premium](https://res.cloudinary.com/dxs92g9nu/image/upload/v1769405376/flor-da-promessa/logo/jpayqhnvgthltyskyuoe.png)
 
 ## ✨ Principais Funcionalidades
 
