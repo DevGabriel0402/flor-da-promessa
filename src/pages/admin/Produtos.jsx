@@ -82,7 +82,7 @@ export default function AdminProdutos() {
 
   const iniciarEdicao = (p) => {
     setEditandoId(p.id);
-    const cat = p.categoria || '';
+    const cat = p.categoria ? p.categoria.trim() : '';
     setForm({
       nome: p.nome || '',
       descricao: p.descricao || '',
@@ -93,9 +93,12 @@ export default function AdminProdutos() {
       ativo: Boolean(p.ativo)
     });
 
-    // Se a categoria já existe, inicia em modo de seleção. Se não (ou vazia custom), modo nova.
-    const existe = categoriasExistentes.includes(cat);
-    setModoNovaCategoria(!existe && !!cat); // Se existe, false. Se não existe mas tem valor, true. Se vazio, false (dropdown selecione).
+    // Se a categoria for válida, não ativa modo novo.
+    // O select vai achar o value correspondente se existir na lista "categoriasExistentes".
+    // Se for uma categoria antiga que não existe mais em outros produtos, ela pode não aparecer no select se ele for derivado só dos produtos. 
+    // Mas "categoriasExistentes" deriva de "produtos". Então se este produto tem a categoria, ela VAI estar na lista.
+    // Então modoNovaCategoria começa false.
+    setModoNovaCategoria(false);
 
     setModalAberto(true);
   };
@@ -105,6 +108,17 @@ export default function AdminProdutos() {
     setEditandoId(null);
     setForm(vazio);
     setModoNovaCategoria(false);
+  };
+
+  const handleCategoriaChange = (e) => {
+    const val = e.target.value;
+    if (val === '__nova__') {
+      setModoNovaCategoria(true);
+      setForm(f => ({ ...f, categoria: '' }));
+    } else {
+      setModoNovaCategoria(false);
+      setForm(f => ({ ...f, categoria: val }));
+    }
   };
 
   const salvar = async (e) => {
@@ -119,7 +133,7 @@ export default function AdminProdutos() {
         nome: form.nome,
         descricao: form.descricao,
         preco: Number(form.preco),
-        categoria: form.categoria,
+        categoria: form.categoria ? form.categoria.trim() : '',
         fotoUrl: form.fotoUrl,
         fotoPublicId: form.fotoPublicId,
         ativo: Boolean(form.ativo)
@@ -214,37 +228,32 @@ export default function AdminProdutos() {
                   <Campo value={form.nome} onChange={onChange('nome')} placeholder="Ex: Brigadeiro Belga" required />
                 </Grupo>
                 <Grupo>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                    <Rotulo style={{ marginBottom: 0 }}>Categoria</Rotulo>
-                    <span
-                      onClick={() => {
-                        setModoNovaCategoria(!modoNovaCategoria);
-                        setForm(f => ({ ...f, categoria: '' })); // Limpa ao trocar para evitar confusão? Ou mantém? Melhor limpar se for para nova.
-                      }}
-                      style={{ fontSize: 11, color: '#B57EDC', cursor: 'pointer', fontWeight: 700, textDecoration: 'underline' }}
-                    >
-                      {modoNovaCategoria || categoriasExistentes.length === 0 ? 'Selecionar existente' : 'Nova categoria'}
-                    </span>
-                  </div>
+                  <Rotulo>Categoria</Rotulo>
 
-                  {!modoNovaCategoria && categoriasExistentes.length > 0 ? (
+                  {!modoNovaCategoria ? (
                     <Select
                       value={form.categoria}
-                      onChange={onChange('categoria')}
-                      placeholder="Selecione uma categoria..."
+                      onChange={handleCategoriaChange}
                     >
                       <option value="">Selecione...</option>
                       {categoriasExistentes.map(c => (
                         <option key={c} value={c}>{c}</option>
                       ))}
+                      <option disabled>──────────</option>
+                      <option value="__nova__">+ Criar nova categoria...</option>
                     </Select>
                   ) : (
-                    <Campo
-                      value={form.categoria}
-                      onChange={onChange('categoria')}
-                      placeholder="Ex: Brigadeiros"
-                      autoFocus={modoNovaCategoria}
-                    />
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <Campo
+                        value={form.categoria}
+                        onChange={onChange('categoria')}
+                        placeholder="Nome da nova categoria"
+                        autoFocus
+                      />
+                      <BotaoSecundario type="button" onClick={() => setModoNovaCategoria(false)} title="Cancelar nova">
+                        x
+                      </BotaoSecundario>
+                    </div>
                   )}
                 </Grupo>
               </Grid2>

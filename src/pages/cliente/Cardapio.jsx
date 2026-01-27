@@ -175,7 +175,7 @@ export default function Cardapio() {
   }, []);
 
   const categorias = useMemo(() => {
-    const set = new Set(produtos.map(p => p.categoria).filter(Boolean));
+    const set = new Set(produtos.map(p => p.categoria ? p.categoria.trim() : '').filter(Boolean));
     return Array.from(set).sort();
   }, [produtos]);
 
@@ -192,9 +192,10 @@ export default function Cardapio() {
     const semCategoria = [];
 
     produtos.forEach(p => {
-      if (p.categoria) {
-        if (!grupos[p.categoria]) grupos[p.categoria] = [];
-        grupos[p.categoria].push(p);
+      if (p.categoria && p.categoria.trim()) {
+        const cat = p.categoria.trim();
+        if (!grupos[cat]) grupos[cat] = [];
+        grupos[cat].push(p);
       } else {
         semCategoria.push(p);
       }
