@@ -14,6 +14,7 @@ import Acompanhar from '../pages/cliente/Acompanhar';
 import AdminLogin from '../pages/admin/Login';
 import Dashboard from '../pages/admin/Dashboard';
 import AdminPedidos from '../pages/admin/Pedidos';
+import AdminPedidosArquivados from '../pages/admin/PedidosArquivados';
 import AdminProdutos from '../pages/admin/Produtos';
 import AdminClientes from '../pages/admin/Clientes';
 import AdminConfiguracoes from '../pages/admin/Configuracoes';
@@ -30,6 +31,7 @@ export default function RouterApp() {
       <Route path="/admin/login" element={<AdminLogin />} />
       <Route path="/admin" element={<RotaAdmin><LayoutAdmin><Dashboard /></LayoutAdmin></RotaAdmin>} />
       <Route path="/admin/pedidos" element={<RotaAdmin><LayoutAdmin><AdminPedidos /></LayoutAdmin></RotaAdmin>} />
+      <Route path="/admin/pedidos/arquivados" element={<RotaAdmin><LayoutAdmin><AdminPedidosArquivados /></LayoutAdmin></RotaAdmin>} />
       <Route path="/admin/produtos" element={<RotaAdmin><LayoutAdmin><AdminProdutos /></LayoutAdmin></RotaAdmin>} />
       <Route path="/admin/clientes" element={<RotaAdmin><LayoutAdmin><AdminClientes /></LayoutAdmin></RotaAdmin>} />
       <Route path="/admin/configuracoes" element={<RotaAdmin><LayoutAdmin><AdminConfiguracoes /></LayoutAdmin></RotaAdmin>} />

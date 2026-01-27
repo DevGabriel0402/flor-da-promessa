@@ -36,6 +36,9 @@ const SelectTrigger = styled.div`
     background-repeat: no-repeat;
     background-size: contain;
     transition: transform 0.2s ease;
+
+
+  
   }
 
   &:hover {
@@ -53,7 +56,6 @@ const DropdownList = styled.div`
   border: 1px solid ${({ theme }) => theme.cores.borda};
   border-radius: 12px;
   box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-  z-index: 1000;
   max-height: 250px;
   overflow-y: auto;
   padding: 6px;
@@ -68,6 +70,7 @@ const OptionItem = styled.div`
   color: ${({ $selected, theme }) => $selected ? theme.cores.primaria : theme.cores.texto};
   background: ${({ $selected, theme }) => $selected ? theme.cores.primariaClara : 'transparent'};
   transition: all 0.15s ease;
+
 
   &:hover {
     background: ${({ $selected, theme }) => $selected ? theme.cores.primariaClara : theme.cores.fundo};

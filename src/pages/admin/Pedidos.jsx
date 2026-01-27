@@ -94,7 +94,8 @@ const Badge = styled.span`
   }};
 `;
 
-const STATUS_KANBAN = ['recebido', 'em_preparo', 'saiu_para_entrega', 'entregue', 'cancelado'];
+const STATUS_KANBAN_ATIVOS = ['recebido', 'em_preparo', 'saiu_para_entrega'];
+const TODOS_STATUS = ['recebido', 'em_preparo', 'saiu_para_entrega', 'entregue', 'cancelado'];
 
 export default function AdminPedidos() {
   const [pedidos, setPedidos] = useState([]);
@@ -105,8 +106,8 @@ export default function AdminPedidos() {
   const carregar = async () => {
     setCarregando(true);
     try {
-      // Carrega todos os pedidos para o Kanban
-      const lista = await listarPedidosAdmin({ status: 'todos' });
+      // Carrega apenas os pedidos ativos para o Kanban
+      const lista = await listarPedidosAdmin({ tipo: 'ativos' });
       setPedidos(lista);
     } catch (e) {
       toast.error('Erro ao carregar pedidos.');
@@ -121,7 +122,13 @@ export default function AdminPedidos() {
     try {
       await atualizarStatusPedido(pedido.id, novoStatus, pedido.cliente?.cpfNormalizado, pedido.codigoConsulta);
       toast.success('Status atualizado!');
-      setPedidos((prev) => prev.map(p => p.id === pedido.id ? { ...p, status: novoStatus } : p));
+
+      // Se o novo status for 'entregue' ou 'cancelado', remove da vista principal (vai para arquivados)
+      if (['entregue', 'cancelado'].includes(novoStatus)) {
+        setPedidos((prev) => prev.filter(p => p.id !== pedido.id));
+      } else {
+        setPedidos((prev) => prev.map(p => p.id === pedido.id ? { ...p, status: novoStatus } : p));
+      }
     } catch (e) {
       toast.error('Erro ao atualizar status.');
     }
@@ -129,7 +136,7 @@ export default function AdminPedidos() {
 
   const pedidosPorStatus = useMemo(() => {
     const map = {};
-    STATUS_KANBAN.forEach(s => map[s] = pedidos.filter(p => p.status === s));
+    STATUS_KANBAN_ATIVOS.forEach(s => map[s] = pedidos.filter(p => p.status === s));
     return map;
   }, [pedidos]);
 
@@ -148,8 +155,8 @@ export default function AdminPedidos() {
           </div>
           <div style={{ minWidth: 160, flex: 1 }}>
             <Select value={statusFiltro} onChange={(e) => setStatusFiltro(e.target.value)}>
-              <option value="todos">Todos os Status</option>
-              {STATUS_KANBAN.map(s => <option key={s} value={s}>{statusParaLabel(s)}</option>)}
+              <option value="todos">Todos Ativos</option>
+              {STATUS_KANBAN_ATIVOS.map(s => <option key={s} value={s}>{statusParaLabel(s)}</option>)}
             </Select>
           </div>
         </div>
@@ -161,7 +168,7 @@ export default function AdminPedidos() {
         <>
           {/* Desktop: Kanban */}
           <KanbanContainer>
-            {STATUS_KANBAN.map(s => (
+            {STATUS_KANBAN_ATIVOS.map(s => (
               <KanbanColuna key={s}>
                 <TituloColuna>
                   {statusParaLabel(s)}
@@ -189,7 +196,7 @@ export default function AdminPedidos() {
                       value={p.status}
                       onChange={(e) => alterarStatus(p, e.target.value)}
                     >
-                      {STATUS_KANBAN.map(opt => (
+                      {TODOS_STATUS.map(opt => (
                         <option key={opt} value={opt}>{statusParaLabel(opt)}</option>
                       ))}
                     </Select>
@@ -229,7 +236,7 @@ export default function AdminPedidos() {
                 </div>
 
                 <Select value={p.status} onChange={(e) => alterarStatus(p, e.target.value)}>
-                  {STATUS_KANBAN.map(opt => (
+                  {TODOS_STATUS.map(opt => (
                     <option key={opt} value={opt}>{statusParaLabel(opt)}</option>
                   ))}
                 </Select>

@@ -40,9 +40,19 @@ export const criarPedido = async (pedido) => {
   return refPedido.id;
 };
 
-export const listarPedidosAdmin = async ({ status } = {}) => {
+export const listarPedidosAdmin = async ({ status, tipo } = {}) => {
   let q = query(collection(db, 'pedidos'));
-  if (status && status !== 'todos') q = query(collection(db, 'pedidos'), where('status', '==', status));
+
+  if (status && status !== 'todos') {
+    q = query(collection(db, 'pedidos'), where('status', '==', status));
+  } else if (tipo === 'ativos') {
+    // Busca apenas pedidos em andamento
+    q = query(collection(db, 'pedidos'), where('status', 'not-in', ['entregue', 'cancelado']));
+  } else if (tipo === 'arquivados') {
+    // Busca apenas pedidos finalizados ou cancelados
+    q = query(collection(db, 'pedidos'), where('status', 'in', ['entregue', 'cancelado']));
+  }
+
   const snap = await getDocs(q);
   const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
   return data.sort((a, b) => (b.criadoEm?.seconds || 0) - (a.criadoEm?.seconds || 0));

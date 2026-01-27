@@ -7,7 +7,8 @@ import {
   HiOutlineTag,
   HiOutlineUsers,
   HiOutlineCog6Tooth,
-  HiArrowRightOnRectangle
+  HiArrowRightOnRectangle,
+  HiOutlineArchiveBox
 } from 'react-icons/hi2';
 import { sairAdmin } from '../services/auth';
 import toast from 'react-hot-toast';
@@ -179,6 +180,7 @@ export default function LayoutAdmin({ children }) {
   const menuItems = [
     { to: '/admin', end: true, label: 'Início', icon: HiOutlineSquares2X2 },
     { to: '/admin/pedidos', label: 'Pedidos', icon: HiOutlineClipboardDocumentList },
+    { to: '/admin/pedidos/arquivados', label: 'Arquivados', icon: HiOutlineArchiveBox },
     { to: '/admin/produtos', label: 'Produtos', icon: HiOutlineTag },
     { to: '/admin/clientes', label: 'Clientes', icon: HiOutlineUsers },
     { to: '/admin/configuracoes', label: 'Ajustes', icon: HiOutlineCog6Tooth },
