@@ -72,6 +72,7 @@ const CatBtn = styled.button`
   font-weight: 800;
   white-space: nowrap;
   cursor: pointer;
+  transition: all 0.2s;
 `;
 
 const Lista = styled.div`
@@ -164,6 +165,7 @@ export default function Cardapio() {
   const { config, carregando: carregandoConfig } = useConfig();
   const [carregandoProdutos, setCarregandoProdutos] = useState(true);
   const [busca, setBusca] = useState('');
+  const [categoriaAtiva, setCategoriaAtiva] = useState(null);
   const { adicionarItem } = useCarrinho();
 
   useEffect(() => {
@@ -218,8 +220,52 @@ export default function Cardapio() {
     return Object.entries(produtosPorCategoria);
   }, [produtosPorCategoria, busca]);
 
+  // Observer para Scroll Spy
+  useEffect(() => {
+    if (busca.trim()) return; // Não observa com busca ativa
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        // Encontra o item que está mais visível
+        // Estratégia: pegar o primeiro que está intersectando
+        const visibleSection = entries.find((entry) => entry.isIntersecting);
+        if (visibleSection) {
+          // O id é "cat-Nome", queremos só o nome
+          // Como o id pode ter espaços, decodificar. (Mas aqui usamos id simples)
+          // O id é gerado como `cat-${nomeSecao}`
+          const id = visibleSection.target.id;
+          const nomeCat = id.replace('cat-', '');
+          setCategoriaAtiva(nomeCat);
+        }
+      },
+      {
+        rootMargin: '-100px 0px -50% 0px', // Ajuste para considerar o header e o sticky
+        threshold: 0.1
+      }
+    );
+
+    secoes.forEach(([nomeSecao]) => {
+      const el = document.getElementById(`cat-${nomeSecao}`);
+      if (el) observer.observe(el);
+    });
+
+    return () => observer.disconnect();
+  }, [secoes, busca]);
+
   const aberto = lojaEstaAberta(config?.funcionamento);
   const temBusca = !!busca.trim();
+
+  const handleScrollTo = (cat) => {
+    setCategoriaAtiva(cat);
+    const el = document.getElementById(`cat-${cat}`);
+    if (el) {
+      // Ajuste de offset por causa do sticky header (~160px header + 50px cat bar)
+      // O ideal é scrollIntoView com block start, mas o sticky pode cobrir.
+      // Vamos tentar scrollIntoView e ver como se comporta, ou fazer manual.
+      const y = el.getBoundingClientRect().top + window.scrollY - 140;
+      window.scrollTo({ top: y, behavior: 'smooth' });
+    }
+  };
 
   return (
     <Container style={{ display: 'flex', flexDirection: 'column', gap: 16, paddingBottom: 28 }}>
@@ -238,15 +284,18 @@ export default function Cardapio() {
         <Busca value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="O que você deseja hoje?" />
       </BuscaWrap>
 
-      {/* Atalhos para categorias (opcional, scroll to section) */}
+      {/* Atalhos para categorias (Sticky) */}
       {!temBusca && categorias.length > 0 && (
-        <Categorias>
+        <Categorias style={{ position: 'sticky', top: 0, zIndex: 50, background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(5px)', paddingTop: 10, paddingBottom: 10, marginLeft: -20, marginRight: -20, paddingLeft: 20, paddingRight: 20 }}>
           {categorias.map((c) => (
-            /* Aqui poderia rolar até a seção, mas por simplicidade no momento só exibimos */
-            <CatBtn key={c} $ativa={false} onClick={() => {
-              const el = document.getElementById(`cat-${c}`);
-              if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }} type="button">{c}</CatBtn>
+            <CatBtn
+              key={c}
+              $ativa={categoriaAtiva === c}
+              onClick={() => handleScrollTo(c)}
+              type="button"
+            >
+              {c}
+            </CatBtn>
           ))}
         </Categorias>
       )}

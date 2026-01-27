@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import toast from 'react-hot-toast';
-import { HiOutlinePlus, HiOutlinePencilSquare, HiOutlineTrash } from 'react-icons/hi2';
+import { HiOutlinePlus, HiOutlinePencilSquare, HiOutlineTrash, HiXMark } from 'react-icons/hi2';
 
 import {
   criarProduto,
@@ -250,8 +250,8 @@ export default function AdminProdutos() {
                         placeholder="Nome da nova categoria"
                         autoFocus
                       />
-                      <BotaoSecundario type="button" onClick={() => setModoNovaCategoria(false)} title="Cancelar nova">
-                        x
+                      <BotaoSecundario type="button" onClick={() => setModoNovaCategoria(false)} title="Cancelar nova" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 10px' }}>
+                        <HiXMark size={20} />
                       </BotaoSecundario>
                     </div>
                   )}
