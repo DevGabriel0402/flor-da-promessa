@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { saveToStorage, loadFromStorage } from '../../utils/persistence';
 import { useLocation } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import styled, { useTheme } from 'styled-components';
+import styled, { useTheme, keyframes, css } from 'styled-components';
 import {
   HiOutlineClipboardDocumentList,
   HiOutlineFire,
@@ -19,6 +19,18 @@ import { Botao } from '../../components/ui/Botoes.jsx';
 import { Campo, Grupo, Grid2, Rotulo } from '../../components/ui/Form.jsx';
 import { Select } from '../../components/ui/Dropdown.jsx';
 
+const animarLinhaHoriz = keyframes`
+  0% { width: 0%; opacity: 0.5; }
+  50% { opacity: 1; }
+  100% { width: 100%; opacity: 0.5; }
+`;
+
+const animarLinhaVert = keyframes`
+  0% { height: 0%; opacity: 0.5; }
+  50% { opacity: 1; }
+  100% { height: 100%; opacity: 0.5; }
+`;
+
 const Timeline = styled.div`
   display: flex;
   flex-direction: row;
@@ -34,7 +46,10 @@ const Timeline = styled.div`
   scrollbar-width: none;
 
   @media (max-width: 600px) {
-    justify-content: flex-start;
+    flex-direction: column;
+    gap: 30px;
+    padding-left: 20px;
+    overflow-x: hidden;
   }
 `;
 
@@ -46,20 +61,58 @@ const Etapa = styled.div`
   flex: 1;
   min-width: 90px;
   text-align: center;
+
+  @media (max-width: 600px) {
+    flex-direction: row;
+    min-width: unset;
+    text-align: left;
+    gap: 16px;
+  }
 `;
 
 const Linha = styled.div`
   position: absolute;
-  left: calc(50% + 22px);
-  right: calc(-50% + 22px);
-  top: 21px;
-  height: 3px;
   background: ${({ $completa, theme }) => ($completa ? theme.cores.primaria : theme.cores.borda)};
   z-index: 1;
+
+  @media (min-width: 601px) {
+    left: calc(50% + 22px);
+    right: calc(-50% + 22px);
+    top: 21px;
+    height: 3px;
+  }
+
+  @media (max-width: 600px) {
+    left: 21px;
+    top: 44px;
+    bottom: -30px; /* Bridge the gap to the next item */
+    width: 3px;
+  }
 
   ${Etapa}:last-child & {
     display: none;
   }
+
+  /* Animação de carregamento infinito (0% a 100%) */
+  ${({ $animando, theme }) => $animando && css`
+    &::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      background: ${theme.cores.primaria};
+      
+      @media (min-width: 601px) {
+        height: 100%;
+        animation: ${animarLinhaHoriz} 2s ease-in-out infinite;
+      }
+      
+      @media (max-width: 600px) {
+        width: 100%;
+        animation: ${animarLinhaVert} 2s ease-in-out infinite;
+      }
+    }
+  `}
 `;
 
 const IconeCirculo = styled.div`
@@ -81,6 +134,10 @@ const IconeCirculo = styled.div`
 const TextoEtapa = styled.div`
   margin-top: 12px;
   padding: 0 4px;
+
+  @media (max-width: 600px) {
+    margin-top: 0;
+  }
 `;
 
 const NomeEtapa = styled.div`
@@ -107,12 +164,17 @@ export default function Acompanhar() {
 
   const [cpf, setCpf] = useState(() => loadFromStorage('ultimo_cpf', preCpf));
   const [codigo, setCodigo] = useState(() => loadFromStorage('ultimo_codigo', preCodigo));
-  const [consulta, setConsulta] = useState(null);
+  const [consulta, setConsulta] = useState(() => loadFromStorage('ultima_consulta', null));
   const [buscando, setBuscando] = useState(false);
 
   useEffect(() => {
+    // Se veio de navegação direta (ex: checkout)
     if (preCpf && preCodigo) {
       handleBuscar(preCpf, preCodigo);
+    }
+    // Ou se temos dados salvos mas não temos a consulta carregada (fallback extra)
+    else if (cpf && codigo && !consulta) {
+      handleBuscar(cpf, codigo);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -145,6 +207,7 @@ export default function Acompanhar() {
       setConsulta(p);
       saveToStorage('ultimo_cpf', cpfValor);
       saveToStorage('ultimo_codigo', codigoValor);
+      saveToStorage('ultima_consulta', p);
     } catch (e) {
       toast.error('Não foi possível buscar o pedido.');
     } finally {
@@ -204,10 +267,12 @@ export default function Acompanhar() {
                 const IconeComp = IconeMap[STATUS_ICONES[s]];
                 const ativa = idx <= posAtual;
                 const completa = idx < posAtual;
+                // Anima se for o status atual, não for o primeiro (recebido) e não for o último
+                const animando = idx === posAtual && s !== 'recebido' && idx < ORDEM_TIMELINE.length - 1;
 
                 return (
                   <Etapa key={s}>
-                    <Linha $completa={completa} />
+                    <Linha $completa={completa} $animando={animando} />
                     <IconeCirculo $ativa={ativa}>
                       {IconeComp && <IconeComp size={22} />}
                     </IconeCirculo>
