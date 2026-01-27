@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import styled, { useTheme } from 'styled-components';
 import toast from 'react-hot-toast';
+import { Link } from 'react-router-dom';
 import {
   HiOutlineUser,
   HiOutlineCurrencyDollar,
@@ -8,7 +9,8 @@ import {
   HiOutlineTag,
   HiOutlineUsers,
   HiOutlineShoppingBag,
-  HiOutlineClock
+  HiOutlineClock,
+  HiOutlineEye
 } from 'react-icons/hi2';
 
 import { listarPedidosAdmin, atualizarStatusPedido } from '../../services/pedidos';
@@ -22,112 +24,90 @@ import { Campo, Grupo, Grid2, Rotulo } from '../../components/ui/Form.jsx';
 import { Select } from '../../components/ui/Dropdown.jsx';
 import { UploadImagem } from '../../components/ui/UploadImagem.jsx';
 
-const KanbanContainer = styled.div`
-  display: flex;
-  gap: 20px;
-  overflow-x: auto;
-  padding-bottom: 20px;
-  margin-top: 20px;
-  
-  /* Garante que o scroll horizontal só apareça quando realmente necessário no desktop */
-  -webkit-overflow-scrolling: touch;
-
-  @media (max-width: 900px) {
-    display: none;
-  }
-`;
-
-const KanbanColuna = styled.div`
-  min-width: 280px;
-  max-width: 280px;
+const ListaPedidos = styled.div`
   display: flex;
   flex-direction: column;
   gap: 12px;
+  margin-top: 10px;
 `;
 
-const TituloColuna = styled.div`
-  font-weight: 900;
-  font-size: 13px;
-  text-transform: uppercase;
-  color: ${({ theme }) => theme.cores.cinza};
-  display: flex;
+const PedidoItem = styled(Card)`
+  display: grid;
+  grid-template-columns: 60px 100px 1fr 100px 140px 60px;
   align-items: center;
-  justify-content: space-between;
-  padding: 0 4px;
-`;
-
-const Contador = styled.span`
-  background: ${({ theme }) => theme.cores.borda};
-  color: ${({ theme }) => theme.cores.texto};
-  padding: 2px 8px;
-  border-radius: 999px;
-  font-size: 11px;
-`;
-
-const KanbanCard = styled(Card)`
-  padding: 12px;
-  cursor: pointer;
+  gap: 16px;
+  padding: 12px 16px;
   transition: all 0.2s ease;
+
   &:hover {
-    transform: translateY(-2px);
-    box-shadow: ${({ theme }) => theme.sombras.media};
     border-color: ${({ theme }) => theme.cores.primariaClara};
+    transform: translateX(4px);
   }
-`;
 
-const MobileView = styled.div`
-  display: none;
   @media (max-width: 900px) {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    margin-top: 20px;
+    grid-template-columns: 50px 1fr auto;
+    gap: 10px;
+    padding: 12px;
   }
 `;
 
-const BadgeStatus = styled.span`
-  font-size: 10px;
-  font-weight: 800;
-  padding: 4px 8px;
-  border-radius: 6px;
-  text-transform: uppercase;
-  background: ${({ $status }) => {
-    if ($status === 'recebido') return '#E0E7FF';
-    if ($status === 'em_preparo') return '#FEF3C7';
-    if ($status === 'saiu_para_entrega') return '#D1FAE5';
-    if ($status === 'entregue') return '#DBEAFE';
-    return '#F3F4F6';
-  }};
-  color: ${({ $status }) => {
-    if ($status === 'recebido') return '#4338CA';
-    if ($status === 'em_preparo') return '#B45309';
-    if ($status === 'saiu_para_entrega') return '#047857';
-    if ($status === 'entregue') return '#1E40AF';
-    return '#4B5563';
-  }};
+const Thumbnail = styled.img`
+  width: 50px;
+  height: 50px;
+  border-radius: 8px;
+  object-fit: cover;
+  background: ${({ theme }) => theme.cores.fundo};
 `;
 
-const STATUS_KANBAN = ['recebido', 'em_preparo', 'saiu_para_entrega', 'entregue', 'cancelado'];
+const InfoPrincipal = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+`;
+
+const Codigo = styled.span`
+  font-weight: 900;
+  font-size: 14px;
+  color: ${({ theme }) => theme.cores.primaria};
+`;
+
+const NomeCliente = styled.span`
+  font-weight: 700;
+  font-size: 15px;
+`;
+
+const QtdItens = styled.span`
+  font-size: 13px;
+  color: ${({ theme }) => theme.cores.cinza};
+  font-weight: 600;
+`;
+
+const ValorTotal = styled.span`
+  font-weight: 900;
+  font-size: 16px;
+  text-align: right;
+  color: ${({ theme }) => theme.cores.texto};
+`;
 
 export default function Dashboard() {
   const [carregando, setCarregando] = useState(true);
   const [stats, setStats] = useState({ pedidosTotal: 0, pendentes: 0, produtosAtivos: 0, clientes: 0 });
   const [pedidos, setPedidos] = useState([]);
-  const [statusFiltro, setStatusFiltro] = useState('todos');
   const theme = useTheme();
 
   const carregarDados = async () => {
     setCarregando(true);
     try {
+      // Carrega apenas os pedidos ativos para o dashboard
       const [listaPedidos, listaProdutos, listaClientes] = await Promise.all([
-        listarPedidosAdmin({ status: 'todos' }),
+        listarPedidosAdmin({ tipo: 'ativos' }),
         listarProdutosAdmin(),
         listarClientesAdmin()
       ]);
 
-      setPedidos(listaPedidos);
+      setPedidos(listaPedidos.slice(0, 10)); // Mostra os 10 mais recentes
 
-      const pendentes = listaPedidos.filter(p => p.status !== 'entregue' && p.status !== 'cancelado').length;
+      const pendentes = listaPedidos.length;
       const ativos = listaProdutos.filter(p => p.ativo).length;
 
       setStats({
@@ -145,37 +125,12 @@ export default function Dashboard() {
 
   useEffect(() => { carregarDados(); }, []);
 
-  const alterarStatus = async (pedido, novoStatus) => {
-    try {
-      await atualizarStatusPedido(pedido.id, novoStatus, pedido.cliente?.cpfNormalizado, pedido.codigoConsulta);
-      toast.success('Status atualizado!');
-      setPedidos((prev) => prev.map(p => p.id === pedido.id ? { ...p, status: novoStatus } : p));
-
-      const novosPedidos = pedidos.map(p => p.id === pedido.id ? { ...p, status: novoStatus } : p);
-      const pendentes = novosPedidos.filter(p => p.status !== 'entregue' && p.status !== 'cancelado').length;
-      setStats(s => ({ ...s, pendentes }));
-    } catch (e) {
-      toast.error('Erro ao atualizar pedido.');
-    }
-  };
-
-  const pedidosPorStatus = useMemo(() => {
-    const map = {};
-    STATUS_KANBAN.forEach(s => map[s] = pedidos.filter(p => p.status === s));
-    return map;
-  }, [pedidos]);
-
-  const pedidosFiltradosMobile = useMemo(() => {
-    if (statusFiltro === 'todos') return pedidos;
-    return pedidos.filter(p => p.status === statusFiltro);
-  }, [pedidos, statusFiltro]);
-
   return (
     <Container style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       <Row>
         <div style={{ flex: 1 }}>
-          <h1 style={{ margin: 0, fontSize: 20, fontWeight: 900 }}>Início</h1>
-          <p style={{ margin: '2px 0 0', color: theme.cores.cinza, fontSize: 13 }}>Resumo da sua loja hoje.</p>
+          <h1 style={{ margin: 0, fontSize: 20, fontWeight: 900 }}>Painel Geral</h1>
+          <p style={{ margin: '2px 0 0', color: theme.cores.cinza, fontSize: 13 }}>Seus pedidos ativos e estatísticas.</p>
         </div>
       </Row>
 
@@ -188,25 +143,16 @@ export default function Dashboard() {
             <Card style={{ borderLeft: `4px solid ${theme.cores.primaria}` }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div>
-                  <div style={{ fontSize: 13, color: theme.cores.cinza, fontWeight: 700 }}>PEDIDOS TOTAIS</div>
-                  <div style={{ fontSize: 24, fontWeight: 900, marginTop: 4 }}>{stats.pedidosTotal}</div>
-                </div>
-                <HiOutlineShoppingBag size={24} color={theme.cores.primaria} />
-              </div>
-            </Card>
-            <Card style={{ borderLeft: '4px solid #F59E0B' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <div>
-                  <div style={{ fontSize: 13, color: theme.cores.cinza, fontWeight: 700 }}>PENDENTES</div>
+                  <div style={{ fontSize: 13, color: theme.cores.cinza, fontWeight: 700 }}>PEDIDOS ATIVOS</div>
                   <div style={{ fontSize: 24, fontWeight: 900, marginTop: 4 }}>{stats.pendentes}</div>
                 </div>
-                <HiOutlineClock size={24} color="#F59E0B" />
+                <HiOutlineShoppingBag size={24} color={theme.cores.primaria} />
               </div>
             </Card>
             <Card style={{ borderLeft: '4px solid #10B981' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div>
-                  <div style={{ fontSize: 13, color: theme.cores.cinza, fontWeight: 700 }}>PRODUTOS ATIVOS</div>
+                  <div style={{ fontSize: 13, color: theme.cores.cinza, fontWeight: 700 }}>PRODUTOS</div>
                   <div style={{ fontSize: 24, fontWeight: 900, marginTop: 4 }}>{stats.produtosAtivos}</div>
                 </div>
                 <HiOutlineTag size={24} color="#10B981" />
@@ -223,117 +169,60 @@ export default function Dashboard() {
             </Card>
           </div>
 
-          <hr style={{ border: 0, borderTop: `1px solid ${theme.cores.borda}`, margin: '10px 0' }} />
+          <div style={{ marginTop: 20 }}>
+            <h2 style={{ margin: '0 0 16px', fontSize: 18, fontWeight: 900 }}>Pedidos Recentes</h2>
 
-          {/* Kanban Section Title */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h2 style={{ margin: 0, fontSize: 18, fontWeight: 900 }}>Fluxo de Pedidos</h2>
-            <div className="mob-only" style={{ width: 160 }}>
-              <Select value={statusFiltro} onChange={(e) => setStatusFiltro(e.target.value)} style={{ padding: '8px 12px', fontSize: 12 }}>
-                <option value="todos">Todos os Status</option>
-                {STATUS_KANBAN.map(s => <option key={s} value={s}>{statusParaLabel(s)}</option>)}
-              </Select>
-            </div>
+            <ListaPedidos>
+              {pedidos.map(p => {
+                const primeiraImg = p.itens?.[0]?.imagem || 'https://via.placeholder.com/150?text=Sem+Imagem';
+                const totalItens = p.itens?.reduce((acc, current) => acc + (current.quantidade || 1), 0) || 0;
+
+                return (
+                  <PedidoItem key={p.id}>
+                    <Thumbnail src={primeiraImg} alt="Produto" />
+
+                    <Codigo>#{safeString(p.codigoConsulta)}</Codigo>
+
+                    <InfoPrincipal>
+                      <NomeCliente>{safeString(p.cliente?.nome)}</NomeCliente>
+                      <div style={{ fontSize: 11, color: theme.cores.cinza, fontWeight: 800 }}>
+                        {statusParaLabel(p.status).toUpperCase()}
+                      </div>
+                    </InfoPrincipal>
+
+                    <QtdItens>{totalItens} {totalItens === 1 ? 'item' : 'itens'}</QtdItens>
+
+                    <div style={{ fontSize: 13, color: theme.cores.cinza, fontWeight: 600 }}>
+                      {p.criadoEm?.seconds ? new Date(p.criadoEm.seconds * 1000).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '-'}
+                    </div>
+
+                    <ValorTotal>{formatarMoeda(p.total)}</ValorTotal>
+
+                    <Link to="/admin/pedidos" style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'flex-end',
+                      gap: 4,
+                      fontSize: 12,
+                      fontWeight: 700,
+                      color: theme.cores.primaria,
+                      textDecoration: 'none'
+                    }}>
+                      <HiOutlineEye size={16} /> Ver
+                    </Link>
+                  </PedidoItem>
+                );
+              })}
+
+              {pedidos.length === 0 && (
+                <Card style={{ textAlign: 'center', padding: 40, border: '2px dashed #E5E7EB', background: 'transparent' }}>
+                  Nenhum pedido ativo no momento.
+                </Card>
+              )}
+            </ListaPedidos>
           </div>
-
-          {/* Desktop: Kanban */}
-          <KanbanContainer>
-            {STATUS_KANBAN.map(s => (
-              <KanbanColuna key={s}>
-                <TituloColuna>
-                  {statusParaLabel(s)}
-                  <Contador>{pedidosPorStatus[s]?.length || 0}</Contador>
-                </TituloColuna>
-
-                {pedidosPorStatus[s]?.map(p => (
-                  <KanbanCard key={p.id}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, overflow: 'hidden' }}>
-                      <strong style={{ fontSize: 12, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        #{safeString(p.codigoConsulta)}
-                      </strong>
-                    </div>
-
-                    <div style={{ fontSize: 14, fontWeight: 800, marginBottom: 2 }}>
-                      {safeString(p.cliente?.nome).split(' ')[0]}
-                    </div>
-
-                    <div style={{ fontSize: 11, color: theme.cores.cinza, marginBottom: 10 }}>
-                      {formatarMoeda(p.total)} · {safeString(p.pagamento).toUpperCase()}
-                    </div>
-
-                    <Select
-                      value={p.status}
-                      onChange={(e) => alterarStatus(p, e.target.value)}
-                    >
-                      {STATUS_KANBAN.map(opt => (
-                        <option key={opt} value={opt}>{statusParaLabel(opt)}</option>
-                      ))}
-                    </Select>
-                  </KanbanCard>
-                ))}
-
-                {pedidosPorStatus[s]?.length === 0 && (
-                  <div style={{
-                    textAlign: 'center',
-                    padding: 16,
-                    fontSize: 11,
-                    color: theme.cores.cinza,
-                    background: '#F9FAFB',
-                    borderRadius: 12,
-                    border: '1px dashed #E5E7EB'
-                  }}>
-                    Nada aqui
-                  </div>
-                )}
-              </KanbanColuna>
-            ))}
-          </KanbanContainer>
-
-          {/* Mobile: Lista */}
-          <MobileView>
-            {pedidosFiltradosMobile.map(p => (
-              <Card key={p.id} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <div style={{ overflow: 'hidden' }}>
-                    <div style={{ fontWeight: 900, fontSize: 15, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      #{safeString(p.codigoConsulta)}
-                    </div>
-                    <div style={{ fontSize: 14, fontWeight: 700, marginTop: 2 }}>{safeString(p.cliente?.nome)}</div>
-                  </div>
-                  <BadgeStatus $status={p.status}>{statusParaLabel(p.status)}</BadgeStatus>
-                </div>
-
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: theme.cores.cinza }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <HiOutlineCurrencyDollar /> <strong>{formatarMoeda(p.total)}</strong>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <HiOutlineUser /> {safeString(p.cliente?.contato)}
-                  </div>
-                </div>
-
-                <Select value={p.status} onChange={(e) => alterarStatus(p, e.target.value)}>
-                  {STATUS_KANBAN.map(opt => (
-                    <option key={opt} value={opt}>{statusParaLabel(opt)}</option>
-                  ))}
-                </Select>
-              </Card>
-            ))}
-            {pedidosFiltradosMobile.length === 0 && <Card>Nenhum pedido recente.</Card>}
-          </MobileView>
         </>
-      )
-      }
-
-      <style dangerouslySetInnerHTML={{
-        __html: `
-        @media (max-width: 900px) {
-          .desk-only { display: none; }
-        }
-        @media (min-width: 901px) {
-          .mob-only { display: none; }
-        }
-      `}} />
+      )}
     </Container>
   );
 }

@@ -76,6 +76,10 @@ export const ModalConteudo = styled(Card)`
   position: relative;
   animation: modalEntra 0.3s ease-out;
 
+  &::-webkit-scrollbar {
+  background: transparent;
+  }
+
   @keyframes modalEntra {
     from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }

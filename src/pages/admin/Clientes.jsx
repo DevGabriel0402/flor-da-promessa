@@ -32,7 +32,7 @@ export default function AdminClientes() {
       {carregando ? (
         <Card>Carregando...</Card>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, justifyContent: 'start' }}>
           {clientes.map((c) => (
             <Card key={c.id} style={{ padding: 14 }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>

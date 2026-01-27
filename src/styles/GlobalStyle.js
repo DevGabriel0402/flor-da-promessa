@@ -17,6 +17,15 @@ export const GlobalStyle = createGlobalStyle`
   }
 
   ::selection {
-    background: ${({ theme }) => theme.cores.primariaClara};
+    background: ${({ theme }) => theme.cores.fundo};
   }
+    ::-webkit-scrollbar {
+    background: ${({ theme }) => theme.cores.fundo};
+    width: 12px;
+    }
+    ::-webkit-scrollbar-thumb {
+    background: ${({ theme }) => theme.cores.primariaClara};
+    border-radius: 999px;
+
+    }
 `;

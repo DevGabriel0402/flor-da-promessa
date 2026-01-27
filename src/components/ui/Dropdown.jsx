@@ -48,43 +48,76 @@ const SelectTrigger = styled.div`
 `;
 
 const DropdownList = styled.div`
-  position: absolute;
-  top: calc(100% + 6px);
+  position: ${({ $accordion }) => $accordion ? 'static' : 'absolute'};
+  top: ${({ $accordion }) => $accordion ? '0' : 'calc(100% + 6px)'};
+  margin-top: ${({ $accordion }) => $accordion ? '10px' : '0'};
   left: 0;
   right: 0;
-  background: ${({ theme }) => theme.cores.branco};
-  border: 1px solid ${({ theme }) => theme.cores.borda};
+  background: ${({ theme, $accordion }) => $accordion ? 'transparent' : theme.cores.branco};
+  border: ${({ $accordion }) => $accordion ? 'none' : '1px solid #E5E7EB'};
   border-radius: 12px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-  max-height: 250px;
-  overflow-y: auto;
-  padding: 6px;
+  box-shadow: ${({ $accordion }) => $accordion ? 'none' : '0 10px 25px rgba(0,0,0,0.1)'};
+  max-height: ${({ $accordion }) => $accordion ? 'none' : '250px'};
+  overflow-y: ${({ $accordion }) => $accordion ? 'visible' : 'auto'};
+  padding: ${({ $accordion }) => $accordion ? '0' : '6px'};
+  display: flex;
+  flex-direction: column;
+  gap: ${({ $accordion }) => $accordion ? '8px' : '2px'};
+  transition: all 0.3s ease;
+  z-index: 100;
 `;
 
 const OptionItem = styled.div`
-  padding: 10px 12px;
-  border-radius: 8px;
-  cursor: pointer;
+  padding: 12px 14px;
+  border-radius: 10px;
+  cursor: ${({ $disabled }) => $disabled ? 'not-allowed' : 'pointer'};
   font-size: 14px;
-  font-weight: 500;
-  color: ${({ $selected, theme }) => $selected ? theme.cores.primaria : theme.cores.texto};
-  background: ${({ $selected, theme }) => $selected ? theme.cores.primariaClara : 'transparent'};
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: ${({ $selected, $disabled, theme }) => {
+        if ($disabled) return theme.cores.cinza;
+        return $selected ? theme.cores.primaria : theme.cores.texto;
+    }};
+  background: ${({ $selected, theme, $accordion }) => {
+        if ($accordion) return $selected ? theme.cores.primariaClara : theme.cores.fundo;
+        return $selected ? theme.cores.primariaClara : 'transparent';
+    }};
+  border: 1px solid ${({ $selected, theme, $accordion }) => {
+        if ($accordion) return $selected ? theme.cores.primaria : theme.cores.borda;
+        return 'transparent';
+    }};
   transition: all 0.15s ease;
-
+  opacity: ${({ $disabled }) => $disabled ? 0.4 : 1};
 
   &:hover {
-    background: ${({ $selected, theme }) => $selected ? theme.cores.primariaClara : theme.cores.fundo};
-    color: ${({ theme }) => theme.cores.primaria};
+    background: ${({ $selected, $disabled, theme, $accordion }) => {
+        if ($disabled) return '';
+        if ($accordion) return $selected ? theme.cores.primariaClara : '#eee';
+        return $selected ? theme.cores.primariaClara : theme.cores.fundo;
+    }};
+    border-color: ${({ theme, $disabled, $accordion }) => ($accordion && !$disabled) ? theme.cores.primaria : ''};
+  }
+
+  &::after {
+    content: '${({ $selected }) => $selected ? '✓' : ''}';
+    font-size: 16px;
+    font-weight: 900;
   }
 `;
 
-export const Select = ({ value, onChange, children, placeholder, ...rest }) => {
-    const [isOpen, setIsOpen] = useState(false);
+export const Select = ({ value, onChange, children, placeholder, accordion = false, ...rest }) => {
+    const [isOpen, setIsOpen] = useState(accordion); // Se for accordion, pode começar aberto ou controlado
     const wrapperRef = useRef(null);
 
     const options = React.Children.map(children, child => {
         if (child.type === 'option') {
-            return { value: child.props.value, label: child.props.children };
+            return {
+                value: child.props.value,
+                label: child.props.children,
+                disabled: child.props.disabled
+            };
         }
         return null;
     }).filter(Boolean);
@@ -92,6 +125,7 @@ export const Select = ({ value, onChange, children, placeholder, ...rest }) => {
     const selectedOption = options.find(opt => String(opt.value) === String(value));
 
     useEffect(() => {
+        if (accordion) return;
         const handleClickOutside = (event) => {
             if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
                 setIsOpen(false);
@@ -99,27 +133,32 @@ export const Select = ({ value, onChange, children, placeholder, ...rest }) => {
         };
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
+    }, [accordion]);
 
-    const handleSelect = (val) => {
+    const handleSelect = (opt) => {
+        if (opt.disabled) return;
         if (onChange) {
-            onChange({ target: { value: val } });
+            onChange({ target: { value: opt.value } });
         }
-        setIsOpen(false);
+        if (!accordion) setIsOpen(false);
     };
 
     return (
         <SelectWrapper ref={wrapperRef} {...rest}>
-            <SelectTrigger $isOpen={isOpen} onClick={() => setIsOpen(!isOpen)}>
-                {selectedOption ? selectedOption.label : placeholder || 'Selecione...'}
-            </SelectTrigger>
-            {isOpen && (
-                <DropdownList>
+            {!accordion && (
+                <SelectTrigger $isOpen={isOpen} onClick={() => setIsOpen(!isOpen)}>
+                    {selectedOption ? selectedOption.label : placeholder || 'Selecione...'}
+                </SelectTrigger>
+            )}
+            {(isOpen || accordion) && (
+                <DropdownList $accordion={accordion}>
                     {options.map(opt => (
                         <OptionItem
                             key={opt.value}
+                            $accordion={accordion}
                             $selected={String(opt.value) === String(value)}
-                            onClick={() => handleSelect(opt.value)}
+                            $disabled={opt.disabled}
+                            onClick={() => handleSelect(opt)}
                         >
                             {opt.label}
                         </OptionItem>

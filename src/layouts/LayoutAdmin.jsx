@@ -15,7 +15,6 @@ import toast from 'react-hot-toast';
 import { useConfig } from '../contexto/ConfigContexto';
 
 const Wrapper = styled.div`
-  min-height: 100vh;
   display: grid;
   grid-template-columns: 260px 1fr;
   @media (max-width: 900px) {
@@ -53,6 +52,7 @@ const TopoMobile = styled.header`
     top: 0;
     z-index: 50;
     box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+    max-height: 64px;
   }
 `;
 
@@ -180,7 +180,6 @@ export default function LayoutAdmin({ children }) {
   const menuItems = [
     { to: '/admin', end: true, label: 'Início', icon: HiOutlineSquares2X2 },
     { to: '/admin/pedidos', label: 'Pedidos', icon: HiOutlineClipboardDocumentList },
-    { to: '/admin/pedidos/arquivados', label: 'Arquivados', icon: HiOutlineArchiveBox },
     { to: '/admin/produtos', label: 'Produtos', icon: HiOutlineTag },
     { to: '/admin/clientes', label: 'Clientes', icon: HiOutlineUsers },
     { to: '/admin/configuracoes', label: 'Ajustes', icon: HiOutlineCog6Tooth },

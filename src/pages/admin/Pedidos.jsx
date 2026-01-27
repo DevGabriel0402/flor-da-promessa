@@ -1,112 +1,165 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import styled, { useTheme } from 'styled-components';
 import toast from 'react-hot-toast';
-import { HiOutlineUser, HiOutlineCurrencyDollar, HiOutlineClock } from 'react-icons/hi2';
+import { Link } from 'react-router-dom';
+import {
+  HiOutlineUser,
+  HiOutlineCurrencyDollar,
+  HiOutlineClock,
+  HiOutlineMapPin,
+  HiChevronDown,
+  HiChevronUp,
+  HiOutlineArchiveBox,
+  HiOutlineArrowLeft
+} from 'react-icons/hi2';
 
 import { listarPedidosAdmin, atualizarStatusPedido } from '../../services/pedidos';
-import { statusParaLabel, STATUS_PEDIDO, ORDEM_TIMELINE } from '../../utils/pedidos';
+import { statusParaLabel, STATUS_PEDIDO, ORDEM_TIMELINE, STATUS_ICONES } from '../../utils/pedidos';
 import { mascararCpf, formatarMoeda } from '../../utils/mascaras';
-import { Container, Card, Row } from '../../components/ui/Base.jsx';
+import { Container, Card, Row, Badge } from '../../components/ui/Base.jsx';
 import { safeString } from '../../utils/geral';
 import { Select } from '../../components/ui/Dropdown.jsx';
 
-const KanbanContainer = styled.div`
-  display: flex;
-  gap: 20px;
-  overflow-x: auto;
-  padding-bottom: 20px;
-  min-height: calc(100vh - 180px);
-
-  @media (max-width: 900px) {
-    display: none;
-  }
-`;
-
-const KanbanColuna = styled.div`
-  min-width: 300px;
-  max-width: 300px;
+const ListaPedidos = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
+  
+
 `;
 
-const TituloColuna = styled.div`
-  font-weight: 900;
-  font-size: 14px;
-  text-transform: uppercase;
-  color: ${({ theme }) => theme.cores.cinza};
+const AccordionItem = styled(Card)`
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid ${({ theme, $aberto }) => $aberto ? theme.cores.primaria : theme.cores.borda};
+  transition: all 0.3s ease;
+ width: 100%;
+`;
+
+const AccordionHeader = styled.div`
+  padding: 16px 20px;
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 4px;
-  margin-bottom: 4px;
-`;
-
-const Contador = styled.span`
-  background: ${({ theme }) => theme.cores.borda};
-  color: ${({ theme }) => theme.cores.texto};
-  padding: 2px 8px;
-  border-radius: 999px;
-  font-size: 12px;
-`;
-
-const KanbanCard = styled(Card)`
-  padding: 14px;
-  cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  border: 1px solid transparent;
-
+  background: ${({ theme, $aberto }) => $aberto ? theme.cores.fundo : 'transparent'};
+  
   &:hover {
-    transform: translateY(-2px);
-    box-shadow: ${({ theme }) => theme.sombras.media};
-    border-color: ${({ theme }) => theme.cores.primariaClara};
+    background: ${({ theme }) => theme.cores.fundo};
   }
 `;
 
-const MobileView = styled.div`
-  display: none;
-  @media (max-width: 900px) {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
+const HeaderInfo = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 1;
 `;
 
-const Badge = styled.span`
-  font-size: 10px;
-  font-weight: 800;
-  padding: 4px 8px;
-  border-radius: 6px;
+const AccordionContent = styled.div`
+  padding: 24px;
+  border-top: 1px solid ${({ theme }) => theme.cores.borda};
+  background: ${({ theme }) => theme.cores.branco};
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+`;
+
+const InfoGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 24px;
+`;
+
+const SecaoInfo = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
+
+const TituloSecao = styled.h4`
+  margin: 0 0 4px;
+  font-size: 13px;
   text-transform: uppercase;
-  background: ${({ $status, theme }) => {
-    if ($status === 'recebido') return '#E0E7FF';
-    if ($status === 'em_preparo') return '#FEF3C7';
-    if ($status === 'saiu_para_entrega') return '#D1FAE5';
-    if ($status === 'entregue') return '#DBEAFE';
-    return '#F3F4F6';
-  }};
-  color: ${({ $status, theme }) => {
-    if ($status === 'recebido') return '#4338CA';
-    if ($status === 'em_preparo') return '#B45309';
-    if ($status === 'saiu_para_entrega') return '#047857';
-    if ($status === 'entregue') return '#1E40AF';
-    return '#4B5563';
-  }};
+  color: ${({ theme }) => theme.cores.cinza};
+  letter-spacing: 0.5px;
 `;
 
-const STATUS_KANBAN_ATIVOS = ['recebido', 'em_preparo', 'saiu_para_entrega'];
+const DetalheTexto = styled.div`
+  font-size: 14px;
+  line-height: 1.5;
+`;
+
+const Thumbnail = styled.img`
+  width: 50px;
+  height: 50px;
+  border-radius: 8px;
+  object-fit: cover;
+`;
+
+const TotalContainer = styled.div`
+  background: ${({ theme }) => theme.cores.fundo};
+  padding: 16px;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+`;
+
+const TotalLinha = styled.div`
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  ${({ $total }) => $total && `
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid #E5E7EB;
+    font-weight: 900;
+    font-size: 18px;
+  `}
+`;
+
+const NativeSelect = styled.select`
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid ${({ theme }) => theme.cores.borda};
+  background-color: white;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  outline: none;
+
+  &:focus {
+    border-color: ${({ theme }) => theme.cores.primaria};
+  }
+
+  &:disabled {
+    background-color: #F3F4F6;
+    cursor: not-allowed;
+    opacity: 0.7;
+  }
+`;
+
+const STATUS_ORDER = ['recebido', 'em_preparo', 'saiu_para_entrega', 'entregue'];
 const TODOS_STATUS = ['recebido', 'em_preparo', 'saiu_para_entrega', 'entregue', 'cancelado'];
+
+const Codigo = styled.span`
+  font-weight: 900;
+  font-size: 14px;
+  color: ${({ theme }) => theme.cores.primaria};
+`;
 
 export default function AdminPedidos() {
   const [pedidos, setPedidos] = useState([]);
   const [carregando, setCarregando] = useState(true);
-  const [statusFiltro, setStatusFiltro] = useState('todos');
+  const [pedidosAbertos, setPedidosAbertos] = useState({});
   const theme = useTheme();
 
   const carregar = async () => {
     setCarregando(true);
     try {
-      // Carrega apenas os pedidos ativos para o Kanban
       const lista = await listarPedidosAdmin({ tipo: 'ativos' });
       setPedidos(lista);
     } catch (e) {
@@ -118,12 +171,15 @@ export default function AdminPedidos() {
 
   useEffect(() => { carregar(); }, []);
 
+  const toggleAccordion = (id) => {
+    setPedidosAbertos(prev => ({ ...prev, [id]: !prev[id] }));
+  };
+
   const alterarStatus = async (pedido, novoStatus) => {
     try {
       await atualizarStatusPedido(pedido.id, novoStatus, pedido.cliente?.cpfNormalizado, pedido.codigoConsulta);
       toast.success('Status atualizado!');
 
-      // Se o novo status for 'entregue' ou 'cancelado', remove da vista principal (vai para arquivados)
       if (['entregue', 'cancelado'].includes(novoStatus)) {
         setPedidos((prev) => prev.filter(p => p.id !== pedido.id));
       } else {
@@ -134,128 +190,133 @@ export default function AdminPedidos() {
     }
   };
 
-  const pedidosPorStatus = useMemo(() => {
-    const map = {};
-    STATUS_KANBAN_ATIVOS.forEach(s => map[s] = pedidos.filter(p => p.status === s));
-    return map;
-  }, [pedidos]);
-
-  const pedidosFiltradosMobile = useMemo(() => {
-    if (statusFiltro === 'todos') return pedidos;
-    return pedidos.filter(p => p.status === statusFiltro);
-  }, [pedidos, statusFiltro]);
-
   return (
     <Container style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       <Row>
-        <h1 style={{ margin: 0, fontSize: 22, fontWeight: 900 }}>Pedidos</h1>
-        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-          <div className="desk-only" style={{ display: 'flex', alignItems: 'center' }}>
-            <Contador>{pedidos.length} pedidos no total</Contador>
-          </div>
-          <div style={{ minWidth: 160, flex: 1 }}>
-            <Select value={statusFiltro} onChange={(e) => setStatusFiltro(e.target.value)}>
-              <option value="todos">Todos Ativos</option>
-              {STATUS_KANBAN_ATIVOS.map(s => <option key={s} value={s}>{statusParaLabel(s)}</option>)}
-            </Select>
-          </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 900 }}>Gerenciar Pedidos</h1>
+          <Badge>{pedidos.length} ativos</Badge>
         </div>
+        <Link to="/admin/pedidos/arquivados" style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 6,
+          padding: '8px 16px',
+          borderRadius: 10,
+          background: theme.cores.fundo,
+          color: theme.cores.texto,
+          textDecoration: 'none',
+          fontSize: 13,
+          fontWeight: 700,
+          border: `1px solid ${theme.cores.borda}`
+        }}>
+          <HiOutlineArchiveBox size={18} /> Ver Arquivados
+        </Link>
       </Row>
 
       {carregando && <Card>Carregando painel...</Card>}
 
       {!carregando && (
-        <>
-          {/* Desktop: Kanban */}
-          <KanbanContainer>
-            {STATUS_KANBAN_ATIVOS.map(s => (
-              <KanbanColuna key={s}>
-                <TituloColuna>
-                  {statusParaLabel(s)}
-                  <Contador>{pedidosPorStatus[s]?.length || 0}</Contador>
-                </TituloColuna>
+        <ListaPedidos>
+          {pedidos.map(p => {
+            const aberto = pedidosAbertos[p.id];
+            const primeiraImg = p.itens?.[0]?.imagem || 'https://via.placeholder.com/150?text=Sem+Imagem';
+            const statusAtualIndex = STATUS_ORDER.indexOf(p.status);
+            const dataHora = p.criadoEm?.seconds
+              ? new Date(p.criadoEm.seconds * 1000).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
+              : '-';
 
-                {pedidosPorStatus[s]?.map(p => (
-                  <KanbanCard key={p.id}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, overflow: 'hidden', gap: 8 }}>
-                      <strong style={{ fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        #{String(p.codigoConsulta || '')}
-                      </strong>
-                      <div style={{ fontSize: 11, color: theme.cores.cinza, flexShrink: 0 }}>{String(p.pagamento || '').toUpperCase()}</div>
+            return (
+              <AccordionItem key={p.id} $aberto={aberto}>
+                <AccordionHeader onClick={() => toggleAccordion(p.id)} $aberto={aberto}>
+                  <HeaderInfo>
+                    <Thumbnail src={primeiraImg} />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <Codigo>#{safeString(p.codigoConsulta)}</Codigo>
+                      <Badge $status={p.status}>{statusParaLabel(p.status)}</Badge>
+                      <div style={{ fontSize: 13, color: theme.cores.cinza, fontWeight: 700 }}>{dataHora}</div>
                     </div>
+                  </HeaderInfo>
+                  {aberto ? <HiChevronUp size={24} /> : <HiChevronDown size={24} />}
+                </AccordionHeader>
 
-                    <div style={{ fontSize: 14, fontWeight: 800, marginBottom: 4 }}>
-                      {String(p.cliente?.nome || '')}
-                    </div>
+                {aberto && (
+                  <AccordionContent>
+                    <InfoGrid>
+                      <SecaoInfo>
+                        <TituloSecao><HiOutlineUser size={14} /> Cliente & Contato</TituloSecao>
+                        <DetalheTexto>
+                          <strong>{safeString(p.cliente?.nome)}</strong><br />
+                          CPF: {mascararCpf(p.cliente?.cpfMascarado || '')}<br />
+                          WhatsApp: {safeString(p.cliente?.contato)}
+                        </DetalheTexto>
+                      </SecaoInfo>
 
-                    <div style={{ fontSize: 12, color: theme.cores.cinza, marginBottom: 12 }}>
-                      {p.itens?.length} {p.itens?.length === 1 ? 'item' : 'itens'} · {formatarMoeda(p.total)}
-                    </div>
+                      <SecaoInfo>
+                        <TituloSecao><HiOutlineMapPin size={14} /> Endereço de Entrega</TituloSecao>
+                        <DetalheTexto>
+                          {safeString(p.endereco?.rua)}, {safeString(p.endereco?.numero)}<br />
+                          {safeString(p.endereco?.bairro)} - {safeString(p.endereco?.complemento)}<br />
+                          Ref: {safeString(p.endereco?.referencia)}
+                        </DetalheTexto>
+                      </SecaoInfo>
 
-                    <Select
-                      value={p.status}
-                      onChange={(e) => alterarStatus(p, e.target.value)}
-                    >
-                      {TODOS_STATUS.map(opt => (
-                        <option key={opt} value={opt}>{statusParaLabel(opt)}</option>
-                      ))}
-                    </Select>
-                  </KanbanCard>
-                ))}
+                      <SecaoInfo>
+                        <TituloSecao><HiOutlineClock size={14} /> Ciclo do Pedido</TituloSecao>
+                        <Select
+                          value={p.status}
+                          onChange={(e) => alterarStatus(p, e.target.value)}
+                          accordion
+                        >
+                          {TODOS_STATUS.map((opt) => {
+                            const optIndexFull = STATUS_ORDER.indexOf(opt);
+                            const desabilitado = p.status !== 'cancelado' && optIndexFull !== -1 && optIndexFull < statusAtualIndex;
+                            return (
+                              <option key={opt} value={opt} disabled={desabilitado}>
+                                {statusParaLabel(opt)} {desabilitado ? '(Indisponível)' : ''}
+                              </option>
+                            );
+                          })}
+                        </Select>
+                        <p style={{ fontSize: 11, color: theme.cores.cinza, marginTop: 4 }}>
+                          * Status anteriores à etapa atual ficam bloqueados.
+                        </p>
+                      </SecaoInfo>
+                    </InfoGrid>
 
-                {pedidosPorStatus[s]?.length === 0 && (
-                  <div style={{ textAlign: 'center', padding: 20, fontSize: 12, color: theme.cores.cinza, background: '#F9FAFB', borderRadius: 12, border: '2px dashed #E5E7EB' }}>
-                    Vazio
-                  </div>
+                    <SecaoInfo>
+                      <TituloSecao>Itens do Pedido</TituloSecao>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                        {p.itens?.map((item, i) => (
+                          <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14 }}>
+                            <span>{item.quantidade}x {item.nome}</span>
+                            <span>{formatarMoeda(item.preco * item.quantidade)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </SecaoInfo>
+
+                    <TotalContainer>
+                      <TotalLinha>
+                        <span>Subtotal</span>
+                        <span>{formatarMoeda(p.subtotal)}</span>
+                      </TotalLinha>
+                      <TotalLinha>
+                        <span>Frete / Entrega</span>
+                        <span>{formatarMoeda(p.taxaEntrega)}</span>
+                      </TotalLinha>
+                      <TotalLinha $total>
+                        <span>Total do Pedido</span>
+                        <span>{formatarMoeda(p.total)}</span>
+                      </TotalLinha>
+                    </TotalContainer>
+                  </AccordionContent>
                 )}
-              </KanbanColuna>
-            ))}
-          </KanbanContainer>
-
-          {/* Mobile: Lista com Filtro */}
-          <MobileView>
-            {pedidosFiltradosMobile.map(p => (
-              <Card key={p.id} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <div style={{ overflow: 'hidden' }}>
-                    <div style={{ fontWeight: 900, fontSize: 16, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      #{safeString(p.codigoConsulta)}
-                    </div>
-                    <div style={{ fontSize: 14, fontWeight: 700, marginTop: 2 }}>{safeString(p.cliente?.nome)}</div>
-                  </div>
-                  <Badge $status={p.status}>{statusParaLabel(p.status)}</Badge>
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, fontSize: 12, color: theme.cores.cinza }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <HiOutlineCurrencyDollar /> {formatarMoeda(p.total)}
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <HiOutlineUser /> {safeString(p.cliente?.contato)}
-                  </div>
-                </div>
-
-                <Select value={p.status} onChange={(e) => alterarStatus(p, e.target.value)}>
-                  {TODOS_STATUS.map(opt => (
-                    <option key={opt} value={opt}>{statusParaLabel(opt)}</option>
-                  ))}
-                </Select>
-              </Card>
-            ))}
-            {pedidosFiltradosMobile.length === 0 && <Card>Nenhum pedido encontrado.</Card>}
-          </MobileView>
-        </>
+              </AccordionItem>
+            );
+          })}
+        </ListaPedidos>
       )}
-
-      <style dangerouslySetInnerHTML={{
-        __html: `
-        @media (max-width: 900px) {
-          .desk-only { display: none; }
-        }
-        @media (min-width: 901px) {
-          .mob-only { display: none; }
-        }
-      `}} />
     </Container>
   );
 }

@@ -83,10 +83,6 @@ export default function AdminConfiguracoes() {
               <Rotulo>Nome da loja</Rotulo>
               <Campo value={form.nomeLoja} onChange={onChange('nomeLoja')} />
             </Grupo>
-            <Grupo>
-              <Rotulo>Cor primária (Configuração)</Rotulo>
-              <Campo value={form.corPrimaria} onChange={onChange('corPrimaria')} placeholder="#B57EDC" />
-            </Grupo>
           </Grid2>
 
           <Grupo>
