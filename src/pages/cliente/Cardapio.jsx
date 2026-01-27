@@ -111,7 +111,10 @@ const Content = styled.div`
 
 const NomeProd = styled.div`
   font-weight: 900;
-  white-space: nowrap;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-clamp: 2;
   overflow: hidden;
   text-overflow: ellipsis;
 `;
