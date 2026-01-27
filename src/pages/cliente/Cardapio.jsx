@@ -163,7 +163,6 @@ export default function Cardapio() {
   const [produtos, setProdutos] = useState([]);
   const { config, carregando: carregandoConfig } = useConfig();
   const [carregandoProdutos, setCarregandoProdutos] = useState(true);
-  const [categoria, setCategoria] = useState('Tudo');
   const [busca, setBusca] = useState('');
   const { adicionarItem } = useCarrinho();
 
@@ -177,18 +176,49 @@ export default function Cardapio() {
 
   const categorias = useMemo(() => {
     const set = new Set(produtos.map(p => p.categoria).filter(Boolean));
-    return ['Tudo', ...Array.from(set)];
+    return Array.from(set).sort();
   }, [produtos]);
 
-  const filtrados = useMemo(() => {
-    return produtos.filter((p) => {
-      const okCategoria = categoria === 'Tudo' || p.categoria === categoria;
-      const okBusca = p.nome?.toLowerCase().includes(busca.toLowerCase());
-      return okCategoria && okBusca;
+  const produtosPorCategoria = useMemo(() => {
+    // Se tiver busca, não agrupa, manda tudo filtrado
+    if (busca.trim()) {
+      return {
+        todos: produtos.filter(p => p.nome?.toLowerCase().includes(busca.toLowerCase()))
+      };
+    }
+
+    // Se nçao tiver busca, agrupa
+    const grupos = {};
+    const semCategoria = [];
+
+    produtos.forEach(p => {
+      if (p.categoria) {
+        if (!grupos[p.categoria]) grupos[p.categoria] = [];
+        grupos[p.categoria].push(p);
+      } else {
+        semCategoria.push(p);
+      }
     });
-  }, [produtos, categoria, busca]);
+
+    if (semCategoria.length > 0) {
+      grupos['Outros'] = semCategoria;
+    }
+
+    // Ordena as chaves (categorias)
+    return Object.keys(grupos).sort().reduce((obj, key) => {
+      obj[key] = grupos[key];
+      return obj;
+    }, {});
+  }, [produtos, busca]);
+
+  // Se agrupa, gera array de seções. Se busca, só 1 seção.
+  const secoes = useMemo(() => {
+    if (busca.trim()) return Object.entries(produtosPorCategoria);
+    return Object.entries(produtosPorCategoria);
+  }, [produtosPorCategoria, busca]);
 
   const aberto = lojaEstaAberta(config?.funcionamento);
+  const temBusca = !!busca.trim();
 
   return (
     <Container style={{ display: 'flex', flexDirection: 'column', gap: 16, paddingBottom: 28 }}>
@@ -207,49 +237,70 @@ export default function Cardapio() {
         <Busca value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="O que você deseja hoje?" />
       </BuscaWrap>
 
-      <Categorias>
-        {categorias.map((c) => (
-          <CatBtn key={c} $ativa={categoria === c} onClick={() => setCategoria(c)} type="button">{c}</CatBtn>
-        ))}
-      </Categorias>
+      {/* Atalhos para categorias (opcional, scroll to section) */}
+      {!temBusca && categorias.length > 0 && (
+        <Categorias>
+          {categorias.map((c) => (
+            /* Aqui poderia rolar até a seção, mas por simplicidade no momento só exibimos */
+            <CatBtn key={c} $ativa={false} onClick={() => {
+              const el = document.getElementById(`cat-${c}`);
+              if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }} type="button">{c}</CatBtn>
+          ))}
+        </Categorias>
+      )}
 
       {carregandoProdutos ? (
         <Card>Carregando doces...</Card>
       ) : (
-        <Lista>
-          {filtrados.map((p) => (
-            <ProdutoCard key={p.id} to={`/produto/${p.id}`}>
-              <Foto src={p.fotoUrl || 'https://picsum.photos/seed/flor/400/400'} alt={p.nome} />
-              <Content>
-                <div>
-                  <NomeProd title={p.nome}>{p.nome}</NomeProd>
-                  <Desc>{p.descricao}</Desc>
-                </div>
-                <Rodape>
-                  <Preco>{formatarMoeda(p.preco)}</Preco>
-                  <Add
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      adicionarItem(p, 1);
-                      toast.success('Adicionado ao carrinho!');
-                    }}
-                    aria-label="Adicionar"
-                  >
-                    <HiPlus size={18} />
-                  </Add>
-                </Rodape>
-              </Content>
-            </ProdutoCard>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
+          {secoes.map(([nomeSecao, listaProdutos]) => (
+            listaProdutos.length > 0 && (
+              <div key={nomeSecao} id={`cat-${nomeSecao}`}>
+                {/* Só mostra título se não for busca ou se tiver agrupado */}
+                {!temBusca && (
+                  <h3 style={{ margin: '0 0 16px 4px', fontSize: 20, color: '#4B5563', borderLeft: '4px solid #B57EDC', paddingLeft: 12 }}>
+                    {nomeSecao}
+                  </h3>
+                )}
+                <Lista>
+                  {listaProdutos.map((p) => (
+                    <ProdutoCard key={p.id} to={`/produto/${p.id}`}>
+                      <Foto src={p.fotoUrl || 'https://picsum.photos/seed/flor/400/400'} alt={p.nome} />
+                      <Content>
+                        <div>
+                          <NomeProd title={p.nome}>{p.nome}</NomeProd>
+                          <Desc>{p.descricao}</Desc>
+                        </div>
+                        <Rodape>
+                          <Preco>{formatarMoeda(p.preco)}</Preco>
+                          <Add
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              adicionarItem(p, 1);
+                              toast.success('Adicionado ao carrinho!');
+                            }}
+                            aria-label="Adicionar"
+                          >
+                            <HiPlus size={18} />
+                          </Add>
+                        </Rodape>
+                      </Content>
+                    </ProdutoCard>
+                  ))}
+                </Lista>
+              </div>
+            )
           ))}
 
-          {filtrados.length === 0 && (
+          {secoes.length === 0 && (
             <Card style={{ gridColumn: '1 / -1', textAlign: 'center', padding: 28, color: '#6B7280' }}>
               <div style={{ fontSize: 36, marginBottom: 10 }}>🍬</div>
-              Nenhum doce por aqui... ainda.
+              Nenhum doce encontrado.
             </Card>
           )}
-        </Lista>
+        </div>
       )}
     </Container>
   );
