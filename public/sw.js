@@ -3,7 +3,7 @@ const ASSETS_TO_CACHE = [
     '/',
     '/index.html',
     '/manifest.json',
-    'https://res.cloudinary.com/dxs92g9nu/image/upload/v1769471452/flor-da-promessa/logo/jpayqhnvgthltyskyuoe.png'
+    'https://res.cloudinary.com/dxs92g9nu/image/upload/v1769406568/flor-da-promessa/logo/xvxidy7lqsam2nayhlmt.png'
 ];
 
 // Instalação do Service Worker e Cache de recursos estáticos
