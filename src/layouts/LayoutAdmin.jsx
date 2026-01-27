@@ -68,7 +68,7 @@ const Marca = styled(Link)`
 const Logo = styled.img`
   width: 100px;
   height: 100px;
-  border-radius: 12px;
+  border-radius: 6px;
 `;
 
 const Nome = styled.span`
