@@ -1,0 +1,23 @@
+{
+    "name": "Flor da Promessa - Confeitaria Artesanal",
+    "short_name": "Flor da Promessa",
+    "description": "Os melhores doces e bolos artesanais para adoçar o seu dia!",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#FFB6C1",
+    "orientation": "portrait",
+    "icons": [
+        {
+            "src": "https://res.cloudinary.com/dxs92g9nu/image/upload/v1769471452/flor-da-promessa/logo/jpayqhnvgthltyskyuoe.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "https://res.cloudinary.com/dxs92g9nu/image/upload/v1769471452/flor-da-promessa/logo/jpayqhnvgthltyskyuoe.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ]
+}
