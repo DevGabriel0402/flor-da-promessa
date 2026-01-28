@@ -33,7 +33,8 @@ export default function Checkout() {
     bairro: '',
     complemento: '',
     referencia: '',
-    pagamento: 'pix'
+    pagamento: 'pix',
+    tipoPedido: 'delivery' // nova opção: delivery ou retirada
   });
 
   useEffect(() => {
@@ -69,7 +70,7 @@ export default function Checkout() {
 
     setForm((p) => ({ ...p, [campo]: valor }));
   };
-  const taxaEntrega = Number(config?.taxaEntrega ?? 8);
+  const taxaEntrega = form.tipoPedido === 'delivery' ? Number(config?.taxaEntrega ?? 8) : 0;
   const total = subtotal + taxaEntrega;
   const aberto = lojaEstaAberta(config?.funcionamento);
 
@@ -102,18 +103,20 @@ export default function Checkout() {
       const cpfNormalizado = normalizarCpf(form.cpf);
       const cpfMascarado = mascararCpf(form.cpf);
 
+      const enderecoData = form.tipoPedido === 'delivery' ? {
+        rua: form.rua,
+        numero: form.numero,
+        bairro: form.bairro,
+        complemento: form.complemento,
+        referencia: form.referencia
+      } : null;
+
       await upsertClientePorCpf({
         nome: form.nome,
         cpfNormalizado,
         cpfMascarado,
         contato: form.contato,
-        endereco: {
-          rua: form.rua,
-          numero: form.numero,
-          bairro: form.bairro,
-          complemento: form.complemento,
-          referencia: form.referencia
-        }
+        endereco: enderecoData
       });
 
       const codigoConsulta = gerarCodigoConsulta();
@@ -125,19 +128,15 @@ export default function Checkout() {
           cpfMascarado,
           contato: form.contato
         },
-        endereco: {
-          rua: form.rua,
-          numero: form.numero,
-          bairro: form.bairro,
-          complemento: form.complemento,
-          referencia: form.referencia
-        },
+        endereco: enderecoData,
+        tipoPedido: form.tipoPedido,
         itens: itens.map(i => ({
           produtoId: i.produtoId,
           nome: i.nome,
           preco: i.preco,
           quantidade: i.quantidade,
-          observacao: i.observacao || ''
+          observacao: i.observacao || '',
+          imagem: i.fotoUrl || ''
         })),
         subtotal,
         taxaEntrega,
@@ -209,48 +208,56 @@ export default function Checkout() {
 
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         <Card style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <strong>Tipo de Pedido</strong>
+          <Select value={form.tipoPedido} onChange={onChange('tipoPedido')}>
+            <option value="delivery">Delivery (Entrega)</option>
+            <option value="retirada">Retirada na Loja</option>
+          </Select>
+        </Card>
+
+        <Card style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <strong>Seus dados</strong>
+          <Grupo>
+            <Rotulo>CPF</Rotulo>
+            <Campo value={form.cpf} onChange={onChange('cpf')} required placeholder="CPF (apenas números)" />
+          </Grupo>
           <Grupo>
             <Rotulo>Nome</Rotulo>
             <Campo value={form.nome} onChange={onChange('nome')} required placeholder="Nome completo" />
           </Grupo>
-          <Grid2>
-            <Grupo>
-              <Rotulo>CPF</Rotulo>
-              <Campo value={form.cpf} onChange={onChange('cpf')} required placeholder="CPF (apenas números)" />
-            </Grupo>
-            <Grupo>
-              <Rotulo>WhatsApp</Rotulo>
-              <Campo value={form.contato} onChange={onChange('contato')} required placeholder="(DDD) 99999-9999" />
-            </Grupo>
-          </Grid2>
+          <Grupo>
+            <Rotulo>WhatsApp</Rotulo>
+            <Campo value={form.contato} onChange={onChange('contato')} required placeholder="(DDD) 99999-9999" />
+          </Grupo>
         </Card>
 
-        <Card style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <strong>Endereço de entrega</strong>
-          <Grupo>
-            <Rotulo>Rua</Rotulo>
-            <Campo value={form.rua} onChange={onChange('rua')} required />
-          </Grupo>
-          <Grid2>
+        {form.tipoPedido === 'delivery' && (
+          <Card style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <strong>Endereço de entrega</strong>
             <Grupo>
-              <Rotulo>Número</Rotulo>
-              <Campo value={form.numero} onChange={onChange('numero')} required />
+              <Rotulo>Rua</Rotulo>
+              <Campo value={form.rua} onChange={onChange('rua')} required />
+            </Grupo>
+            <Grid2>
+              <Grupo>
+                <Rotulo>Número</Rotulo>
+                <Campo value={form.numero} onChange={onChange('numero')} required />
+              </Grupo>
+              <Grupo>
+                <Rotulo>Bairro</Rotulo>
+                <Campo value={form.bairro} onChange={onChange('bairro')} required />
+              </Grupo>
+            </Grid2>
+            <Grupo>
+              <Rotulo>Complemento</Rotulo>
+              <Campo value={form.complemento} onChange={onChange('complemento')} placeholder="Apto, bloco..." />
             </Grupo>
             <Grupo>
-              <Rotulo>Bairro</Rotulo>
-              <Campo value={form.bairro} onChange={onChange('bairro')} required />
+              <Rotulo>Referência</Rotulo>
+              <Campo value={form.referencia} onChange={onChange('referencia')} placeholder="Ex: perto da padaria" />
             </Grupo>
-          </Grid2>
-          <Grupo>
-            <Rotulo>Complemento</Rotulo>
-            <Campo value={form.complemento} onChange={onChange('complemento')} placeholder="Apto, bloco..." />
-          </Grupo>
-          <Grupo>
-            <Rotulo>Referência</Rotulo>
-            <Campo value={form.referencia} onChange={onChange('referencia')} placeholder="Ex: perto da padaria" />
-          </Grupo>
-        </Card>
+          </Card>
+        )}
 
         <Card style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <strong>Pagamento</strong>
@@ -263,11 +270,11 @@ export default function Checkout() {
 
         <Card>
           <Row>
-            <strong>Total (com entrega)</strong>
+            <strong>Total ({form.tipoPedido === 'delivery' ? 'com entrega' : 'retirada'})</strong>
             <strong style={{ color: theme.cores.primaria, fontSize: 18 }}>{formatarMoeda(total)}</strong>
           </Row>
           <div style={{ marginTop: 8, fontSize: 12, color: '#6B7280' }}>
-            Subtotal: {formatarMoeda(subtotal)} · Entrega: {formatarMoeda(taxaEntrega)}
+            Subtotal: {formatarMoeda(subtotal)} {form.tipoPedido === 'delivery' && `· Entrega: ${formatarMoeda(taxaEntrega)}`}
           </div>
         </Card>
 

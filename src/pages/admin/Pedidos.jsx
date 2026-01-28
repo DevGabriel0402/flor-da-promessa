@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import styled, { useTheme } from 'styled-components';
 import toast from 'react-hot-toast';
 import { Link } from 'react-router-dom';
@@ -220,7 +220,7 @@ export default function AdminPedidos() {
         <ListaPedidos>
           {pedidos.map(p => {
             const aberto = pedidosAbertos[p.id];
-            const primeiraImg = p.itens?.[0]?.imagem || 'https://via.placeholder.com/150?text=Sem+Imagem';
+            const primeiraImg = p.itens?.[0]?.imagem || 'https://res.cloudinary.com/dxs92g9nu/image/upload/v1769399355/flor-da-promessa/produtos/dhtqbroegyzchutfmoid.png';
             const statusAtualIndex = STATUS_ORDER.indexOf(p.status);
             const dataHora = p.criadoEm?.seconds
               ? new Date(p.criadoEm.seconds * 1000).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
