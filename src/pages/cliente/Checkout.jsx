@@ -1,5 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { saveToStorage } from '../../utils/persistence';
 import toast from 'react-hot-toast';
 import { useTheme } from 'styled-components';
 
@@ -149,7 +150,20 @@ export default function Checkout() {
 
       toast.success(`Pedido criado! Código: ${codigoConsulta}`, { duration: 6000 });
       limparCarrinho();
-      navigate('/acompanhar', { state: { cpf: cpfNormalizado, codigo: codigoConsulta } });
+
+      const dadosPedido = {
+        total,
+        codigoConsulta,
+        cliente: { cpfNormalizado, nome: form.nome },
+        pagamento: form.pagamento
+      };
+
+      if (form.pagamento === 'pix') {
+        saveToStorage('pedido_em_pagamento', dadosPedido);
+        navigate('/pagamento', { state: { pedido: dadosPedido } });
+      } else {
+        navigate('/acompanhar', { state: { cpf: cpfNormalizado, codigo: codigoConsulta } });
+      }
     } catch (err) {
       toast.error('Não foi possível finalizar o pedido.');
     } finally {

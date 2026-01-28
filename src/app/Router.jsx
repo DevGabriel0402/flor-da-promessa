@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 
 import LayoutCliente from '../layouts/LayoutCliente';
 import LayoutAdmin from '../layouts/LayoutAdmin';
@@ -10,6 +10,7 @@ import ProdutoDetalhe from '../pages/cliente/ProdutoDetalhe';
 import Carrinho from '../pages/cliente/Carrinho';
 import Checkout from '../pages/cliente/Checkout';
 import Acompanhar from '../pages/cliente/Acompanhar';
+import Pagamento from '../pages/cliente/Pagamento';
 
 import AdminLogin from '../pages/admin/Login';
 import Dashboard from '../pages/admin/Dashboard';
@@ -27,6 +28,7 @@ export default function RouterApp() {
       <Route path="/carrinho" element={<LayoutCliente><Carrinho /></LayoutCliente>} />
       <Route path="/checkout" element={<LayoutCliente><Checkout /></LayoutCliente>} />
       <Route path="/acompanhar" element={<LayoutCliente><Acompanhar /></LayoutCliente>} />
+      <Route path="/pagamento" element={<LayoutCliente><Pagamento /></LayoutCliente>} />
 
       <Route path="/admin/login" element={<AdminLogin />} />
       <Route path="/admin" element={<RotaAdmin><LayoutAdmin><Dashboard /></LayoutAdmin></RotaAdmin>} />
@@ -35,6 +37,7 @@ export default function RouterApp() {
       <Route path="/admin/produtos" element={<RotaAdmin><LayoutAdmin><AdminProdutos /></LayoutAdmin></RotaAdmin>} />
       <Route path="/admin/clientes" element={<RotaAdmin><LayoutAdmin><AdminClientes /></LayoutAdmin></RotaAdmin>} />
       <Route path="/admin/configuracoes" element={<RotaAdmin><LayoutAdmin><AdminConfiguracoes /></LayoutAdmin></RotaAdmin>} />
+      <Route path="*" element={<LayoutCliente><div>Rota não encontrada: {window.location.pathname}</div></LayoutCliente>} />
     </Routes>
   );
 }

@@ -87,3 +87,14 @@ export const buscarPedidoPorCpfECodigoAdmin = async (cpfNormalizado, codigoConsu
   const doc0 = snap.docs[0];
   return doc0 ? { id: doc0.id, ...doc0.data() } : null;
 };
+// Busca pedido apenas pelo código (fallback final se o CPF falhar)
+export const buscarPedidoPorCodigoApenas = async (codigoConsulta) => {
+  const q = query(
+    collection(db, 'pedidos'),
+    where('codigoConsulta', '==', codigoConsulta),
+    limit(1)
+  );
+  const snap = await getDocs(q);
+  const doc0 = snap.docs[0];
+  return doc0 ? { id: doc0.id, ...doc0.data() } : null;
+};

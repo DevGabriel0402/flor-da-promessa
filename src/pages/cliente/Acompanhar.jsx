@@ -13,7 +13,7 @@ import {
 
 import { normalizarCpf, validarCpf } from '../../utils/cpf';
 import { statusParaLabel, ORDEM_TIMELINE, STATUS_ICONES } from '../../utils/pedidos';
-import { buscarConsultaPorCpfECodigo } from '../../services/pedidos';
+import { buscarConsultaPorCpfECodigo, buscarPedidoPorCpfECodigoAdmin, buscarPedidoPorCodigoApenas } from '../../services/pedidos';
 import { Container, Card } from '../../components/ui/Base.jsx';
 import { Botao } from '../../components/ui/Botoes.jsx';
 import { Campo, Grupo, Grid2, Rotulo } from '../../components/ui/Form.jsx';
@@ -162,9 +162,14 @@ export default function Acompanhar() {
   const preCpf = location.state?.cpf || '';
   const preCodigo = location.state?.codigo || '';
 
-  const [cpf, setCpf] = useState(() => loadFromStorage('ultimo_cpf', preCpf));
-  const [codigo, setCodigo] = useState(() => loadFromStorage('ultimo_codigo', preCodigo));
-  const [consulta, setConsulta] = useState(() => loadFromStorage('ultima_consulta', null));
+  // Prioriza dados vindos da navegação (estágio anterior) sobre o storage local
+  const [cpf, setCpf] = useState(() => preCpf || loadFromStorage('ultimo_cpf', ''));
+  const [codigo, setCodigo] = useState(() => preCodigo || loadFromStorage('ultimo_codigo', ''));
+  const [consulta, setConsulta] = useState(() => {
+    // Se temos dados de navegação, ignoramos a consulta salva anteriormente
+    if (preCpf && preCodigo) return null;
+    return loadFromStorage('ultima_consulta', null);
+  });
   const [buscando, setBuscando] = useState(false);
 
   useEffect(() => {
@@ -198,7 +203,25 @@ export default function Acompanhar() {
     setBuscando(true);
     try {
       const cpfNorm = normalizarCpf(cpfValor);
-      const p = await buscarConsultaPorCpfECodigo(cpfNorm, String(codigoValor).trim().toUpperCase());
+      const codigoFmt = String(codigoValor).trim().toUpperCase();
+
+      // Tenta busca rápida via coleção de consultas (ID: CPF_CODIGO)
+      let p = await buscarConsultaPorCpfECodigo(cpfNorm, codigoFmt);
+
+      // Fallback: Se não encontrou na consulta, tenta buscar diretamente nos pedidos pelo código
+      // Isso ajuda se houver divergência no CPF salvo vs informado
+      // Fallback 1: Busca direta na coleção de pedidos (CPF + Código)
+      if (!p) {
+        const pDireto = await buscarPedidoPorCpfECodigoAdmin(cpfNorm, codigoFmt);
+        if (pDireto) p = pDireto;
+      }
+
+      // Fallback 2: Busca apenas pelo código (Se o CPF salvo estiver errado)
+      if (!p) {
+        const pCodigo = await buscarPedidoPorCodigoApenas(codigoFmt);
+        if (pCodigo) p = pCodigo;
+      }
+
       if (!p) {
         toast.error('Pedido não encontrado.');
         setConsulta(null);
