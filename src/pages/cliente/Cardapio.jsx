@@ -61,14 +61,17 @@ const Categorias = styled.div`
   gap: 10px;
   overflow-x: auto;
   padding-bottom: 4px;
+  border-radius: 10px;
+  
+
 `;
 
 const CatBtn = styled.button`
   border: 1px solid ${({ theme }) => theme.cores.borda};
-  background: ${({ $ativa, theme }) => ($ativa ? theme.cores.primaria : theme.cores.branco)};
-  color: ${({ $ativa, theme }) => ($ativa ? theme.cores.branco : theme.cores.texto)};
+  background: ${({ $ativa, theme }) => ($ativa ? theme.cores.primariaClara + '99' : theme.cores.branco)};
+  color: ${({ $ativa, theme }) => ($ativa ? theme.cores.primaria : theme.cores.texto)};
   padding: 10px 14px;
-  border-radius: 999px;
+  border-radius: ${({ theme }) => theme.bordas.raio};
   font-weight: 800;
   white-space: nowrap;
   cursor: pointer;
@@ -289,7 +292,7 @@ export default function Cardapio() {
 
       {/* Atalhos para categorias (Sticky) */}
       {!temBusca && categorias.length > 0 && (
-        <Categorias style={{ position: 'sticky', top: 0, zIndex: 50, background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(5px)', paddingTop: 10, paddingBottom: 10, marginLeft: -20, marginRight: -20, paddingLeft: 20, paddingRight: 20 }}>
+        <Categorias style={{ position: 'sticky', top: 50, zIndex: 50, background: '#ffffff90', backdropFilter: 'blur(5px)', paddingTop: 10, paddingBottom: 10, paddingLeft: 20, paddingRight: 20 }}>
           {categorias.map((c) => (
             <CatBtn
               key={c}

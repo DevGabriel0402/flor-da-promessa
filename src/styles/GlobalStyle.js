@@ -17,10 +17,10 @@ export const GlobalStyle = createGlobalStyle`
   }
 
   ::selection {
-    background: ${({ theme }) => theme.cores.fundo};
+    background: ${({ theme }) => theme.cores.primaria};
   }
     ::-webkit-scrollbar {
-    background: ${({ theme }) => theme.cores.fundo};
+    background: ${({ theme }) => theme.cores.primariaClara};
     width: 12px;
     }
     ::-webkit-scrollbar-thumb {

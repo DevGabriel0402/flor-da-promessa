@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
 import {
@@ -9,6 +9,7 @@ import {
 } from 'react-icons/hi2';
 import { useCarrinho } from '../contexto/CarrinhoContexto';
 import { useConfig } from '../contexto/ConfigContexto';
+import DesktopBlocked from '../components/ui/DesktopBlocked';
 
 const Wrapper = styled.div`
   min-height: 100vh;
@@ -21,6 +22,7 @@ const Topo = styled.header`
   z-index: 50;
   background: ${({ theme }) => theme.cores.branco};
   border-bottom: 1px solid ${({ theme }) => theme.cores.borda};
+  backdrop-filter: blur(5px);
 `;
 
 const TopoInner = styled.div`
@@ -102,6 +104,19 @@ export default function LayoutCliente({ children }) {
   const { totalItens } = useCarrinho();
   const { config } = useConfig();
   const { pathname } = useLocation();
+  const [isDesktop, setIsDesktop] = useState(window.innerWidth > 900);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsDesktop(window.innerWidth > 900);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  if (isDesktop) {
+    return <DesktopBlocked />;
+  }
 
   return (
     <Wrapper>
