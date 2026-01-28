@@ -13,7 +13,7 @@ import {
   HiOutlineArrowLeft
 } from 'react-icons/hi2';
 
-import { listarPedidosAdmin, atualizarStatusPedido } from '../../services/pedidos';
+import { listarPedidosAdmin, atualizarStatusPedido, ouvirPedidosAtivosAdmin } from '../../services/pedidos';
 import { statusParaLabel, STATUS_PEDIDO, ORDEM_TIMELINE, STATUS_ICONES } from '../../utils/pedidos';
 import { mascararCpf, formatarMoeda } from '../../utils/mascaras';
 import { Container, Card, Row, Badge } from '../../components/ui/Base.jsx';

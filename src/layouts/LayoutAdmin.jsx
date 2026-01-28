@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
 import {
@@ -11,6 +11,7 @@ import {
   HiOutlineArchiveBox
 } from 'react-icons/hi2';
 import { sairAdmin } from '../services/auth';
+import { ouvirPedidosAtivosCount } from '../services/pedidos';
 import toast from 'react-hot-toast';
 import { useConfig } from '../contexto/ConfigContexto';
 
@@ -84,6 +85,32 @@ const Menu = styled.nav`
   gap: 6px;
 `;
 
+const BadgeAdmin = styled.span`
+  background: ${({ theme }) => theme.cores.perigo};
+  color: white;
+  font-size: 10px;
+  font-weight: 900;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 99px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  position: absolute;
+  top: -6px;
+  right: -8px;
+  box-shadow: 0 2px 5px rgba(239, 68, 68, 0.3);
+  z-index: 10;
+  border: 2px solid ${({ theme }) => theme.cores.branco};
+`;
+
+const BadgeAdminTab = styled(BadgeAdmin)`
+  top: -4px;
+  right: -10px;
+`;
+
+const NOTIFICATION_SOUND = "https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3";
 const Item = styled(NavLink)`
   display: flex;
   align-items: center;
@@ -167,6 +194,33 @@ export default function LayoutAdmin({ children }) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const { config } = useConfig();
+  const [totalAtivos, setTotalAtivos] = useState(0);
+  const [vistosCount, setVistosCount] = useState(() => Number(localStorage.getItem('admin_pedidos_vistos') || 0));
+  const prevTotalRef = useRef(0);
+  const audioRef = useRef(new Audio(NOTIFICATION_SOUND));
+
+  // Listener para o total de pedidos ativos
+  useEffect(() => {
+    const unsub = ouvirPedidosAtivosCount((count) => {
+      if (count > prevTotalRef.current) {
+        // Toca som apenas se o número TOTAL aumentou (nova venda)
+        audioRef.current.play().catch(e => console.warn("Interação necessária para som:", e));
+      }
+      setTotalAtivos(count);
+      prevTotalRef.current = count;
+    });
+    return () => unsub();
+  }, []);
+
+  // Efeito para "limpar" a badge quando entrar na página de pedidos
+  useEffect(() => {
+    if (pathname === '/admin/pedidos') {
+      setVistosCount(totalAtivos);
+      localStorage.setItem('admin_pedidos_vistos', String(totalAtivos));
+    }
+  }, [pathname, totalAtivos]);
+
+  const novosPedidosCount = Math.max(0, totalAtivos - vistosCount);
 
   const handleSair = async () => {
     try {
@@ -199,7 +253,12 @@ export default function LayoutAdmin({ children }) {
           <Menu>
             {menuItems.map(item => (
               <Item key={item.to} to={item.to} end={item.end}>
-                <item.icon size={20} />
+                <div style={{ position: 'relative', display: 'flex' }}>
+                  <item.icon size={20} />
+                  {item.label === 'Pedidos' && novosPedidosCount > 0 && (
+                    <BadgeAdmin>{novosPedidosCount}</BadgeAdmin>
+                  )}
+                </div>
                 {item.label}
               </Item>
             ))}
@@ -231,7 +290,12 @@ export default function LayoutAdmin({ children }) {
       <TabBar>
         {menuItems.map(item => (
           <TabItem key={item.to} to={item.to} end={item.end}>
-            <item.icon size={22} />
+            <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <item.icon size={22} />
+              {item.label === 'Pedidos' && novosPedidosCount > 0 && (
+                <BadgeAdminTab>{novosPedidosCount}</BadgeAdminTab>
+              )}
+            </div>
             {item.label}
           </TabItem>
         ))}

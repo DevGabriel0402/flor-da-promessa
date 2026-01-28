@@ -5,6 +5,7 @@ import {
   getDoc,
   getDocs,
   limit,
+  onSnapshot,
   orderBy,
   query,
   serverTimestamp,
@@ -98,3 +99,37 @@ export const buscarPedidoPorCodigoApenas = async (codigoConsulta) => {
   const doc0 = snap.docs[0];
   return doc0 ? { id: doc0.id, ...doc0.data() } : null;
 };
+
+// --- TEMPO REAL ---
+
+// Ouvir pedidos ativos para o Admin
+export const ouvirPedidosAtivosAdmin = (callback) => {
+  const q = query(
+    collection(db, 'pedidos'),
+    where('status', 'not-in', ['entregue', 'cancelado'])
+  );
+  return onSnapshot(q, (snap) => {
+    const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    callback(data.sort((a, b) => (b.criadoEm?.seconds || 0) - (a.criadoEm?.seconds || 0)));
+  });
+};
+
+// Ouvir apenas a quantidade de pedidos ativos (para a badge)
+export const ouvirPedidosAtivosCount = (callback) => {
+  const q = query(
+    collection(db, 'pedidos'),
+    where('status', 'not-in', ['entregue', 'cancelado'])
+  );
+  return onSnapshot(q, (snap) => {
+    callback(snap.size);
+  });
+};
+
+// Ouvir um pedido específico (para o Cliente)
+export const ouvirPedidoPorId = (pedidoId, callback) => {
+  return onSnapshot(doc(db, 'pedidos', pedidoId), (snap) => {
+    if (snap.exists()) callback({ id: snap.id, ...snap.data() });
+    else callback(null);
+  });
+};
+

@@ -74,8 +74,17 @@ export default function Pagamento() {
     };
 
     const handleWhatsApp = () => {
-        const fone = config?.contato?.whatsapp || '5531999999999'; // Fallback se não configurado
-        const texto = `Olá! Realizei o pagamento do pedido #${codigoConsulta} via PIX e estou enviando o comprovante.`;
+        const fone = config?.contato?.whatsapp || '5531973056756';
+        const item = pedido?.itens?.[0] || {};
+
+        const texto = `Olá! Realizei o pagamento do pedido via PIX e estou enviando o comprovante.
+
+*Pedido:* #${codigoConsulta}
+*Produto:* ${item.nome || 'N/A'}
+*Quantidade:* ${item.quantidade || 1}
+*Tipo:* ${pedido?.tipoPedido === 'delivery' ? 'Entrega' : 'Retirada'}
+*Valor Total:* ${formatarMoeda(total)}`;
+
         window.open(`https://wa.me/${fone.replace(/\D/g, '')}?text=${encodeURIComponent(texto)}`, '_blank');
     };
 

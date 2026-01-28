@@ -153,8 +153,10 @@ export default function Checkout() {
       const dadosPedido = {
         total,
         codigoConsulta,
-        cliente: { cpfNormalizado, nome: form.nome },
-        pagamento: form.pagamento
+        cliente: { cpfNormalizado, nome: form.nome, contato: form.contato },
+        itens: itens.map(i => ({ nome: i.nome, quantidade: i.quantidade, preco: i.preco })),
+        pagamento: form.pagamento,
+        tipoPedido: form.tipoPedido
       };
 
       if (form.pagamento === 'pix') {
